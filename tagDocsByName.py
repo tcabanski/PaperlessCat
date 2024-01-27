@@ -11,6 +11,10 @@ log.addHandler(console)
 log.setLevel(logging.INFO)
 log.info("Starting")
 
+#config
+mapDocumentTypeId = 1
+maxDocsToProcess = 1000
+
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
         if tag["name"] == name:
@@ -40,7 +44,26 @@ tagsToAssign = [
     {"name":"Fire", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Desert", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Astral", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []}
+    {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold"], "excludeWords": []},
+    {"name":"City/Village.", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
+    {"name":"Forest", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
+    {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Jungle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Lake/Ocean", "id":None, "docIds": [], "synonyms": ["Lake", "Ocean", "Sea", "Beach", "Harbor", "Cove", "Docks"], "excludeWords": []},
+    {"name":"Mountain", "id":None, "docIds": [], "synonyms": ["Cliff", "Bluff"], "excludeWords": []},
+    {"name":"River", "id":None, "docIds": [], "synonyms": ["Stream", "Creek"], "excludeWords": []},
+    {"name":"Ruins", "id":None, "docIds": [], "synonyms": ["Broken", "Abandoned"], "excludeWords": []},
+    {"name":"Fey", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Scrub", "id":None, "docIds": [], "synonyms": ["Waste"], "excludeWords": []},
+    {"name":"Sky", "id":None, "docIds": [], "synonyms": ["Air"], "excludeWords": []},
+    {"name":"Tavern/Inn", "id":None, "docIds": [], "synonyms": ["Tavern", "Inn", "Bar"], "excludeWords": []},
+    {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
+    {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
+    {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave"], "excludeWords": []},
 ]
 
 nextPageUrl = "http://localhost:8000/api/tags/"
@@ -58,11 +81,10 @@ while nextPageUrl is not None:
     nextPageUrl = rawJson["next"]
 # end while
 
-# Scan through all the documents and assign likely tags
-maxDocs = 100
+# Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 nextPageUrl = "http://localhost:8000/api/documents/"
-while nextPageUrl is not None and docs < maxDocs:
+while nextPageUrl is not None and docs < maxDocsToProcess:
     pagesToUpdate = {}
     response = requests.get(nextPageUrl, auth = ("tom", "paperless"))
     rawJson = response.json()
@@ -72,8 +94,8 @@ while nextPageUrl is not None and docs < maxDocs:
         log.debug(f"get docId {docId}")
 
         docResponse = requests.get(f"http://localhost:8000/api/documents/{docId}/", auth = ("tom", "paperless"))
-
         log.debug(docResponse)
+
         parsedDocResponse = json.loads(docResponse.text)
         title = parsedDocResponse["title"]
         id = parsedDocResponse["id"]
@@ -110,7 +132,7 @@ while nextPageUrl is not None and docs < maxDocs:
                         pagesToUpdate[id] = [tagToAssign["id"]]
 
         docs += 1
-        if docs == maxDocs:
+        if docs == maxDocsToProcess:
             break
 
         if docs % 10 == 0:
@@ -122,13 +144,34 @@ while nextPageUrl is not None and docs < maxDocs:
     pagesByTags = {}
     for key in pagesToUpdate.keys():
         for tag in pagesToUpdate[key]:
-            if tag in pagesByTags:
-                pagesByTags[tag].append(key)
-            else:
-                pagesByTags[tag] = [ key ]
+            if tag is not None:
+                if tag in pagesByTags:
+                    pagesByTags[tag].append(key)
+                else:
+                    pagesByTags[tag] = [ key ]
 
     for key in pagesByTags.keys(): 
         log.info(f"{key}:{pagesByTags[key]}")
+
+    #Call bulk edit on each tag to update pages with tag
+    for key in pagesByTags.keys():
+        log.info(f"Bulk updating pages for tag {key}")
+        #make the json body
+        body = {
+            "documents": pagesByTags[key],
+            "method": "modify_tags",
+            "parameters": {
+                "add_tags": [ key ],
+                "remove_tags": []
+            }
+        }
+
+        #call bulk edit
+        # editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+        # log.debug(docResponse)
+
+        # if editResponse.status_code != 200:
+        #     log.error(f"Failed to bulk edit for tag {key}.  Full response is {docResponse}")
 
     nextPageUrl = rawJson["next"]
 # end while
