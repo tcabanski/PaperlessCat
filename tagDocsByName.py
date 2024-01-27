@@ -2,6 +2,7 @@ import requests
 from collections import namedtuple
 import json
 import logging
+import pathlib
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -13,7 +14,7 @@ log.info("Starting")
 
 #config
 mapDocumentTypeId = 1
-maxDocsToProcess = 1000
+maxDocsToProcess = 10
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
@@ -84,6 +85,7 @@ while nextPageUrl is not None:
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 nextPageUrl = "http://localhost:8000/api/documents/"
+mapDocuments = []
 while nextPageUrl is not None and docs < maxDocsToProcess:
     pagesToUpdate = {}
     response = requests.get(nextPageUrl, auth = ("tom", "paperless"))
@@ -99,6 +101,10 @@ while nextPageUrl is not None and docs < maxDocsToProcess:
         parsedDocResponse = json.loads(docResponse.text)
         title = parsedDocResponse["title"]
         id = parsedDocResponse["id"]
+        originalFileName = parsedDocResponse["original_file_name"]
+
+        if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
+            mapDocuments.append(id)
 
         for tagToAssign in tagsToAssign:
             #Tag if the title includes the name of the tag and one of the exclude words is not present
@@ -150,13 +156,10 @@ while nextPageUrl is not None and docs < maxDocsToProcess:
                 else:
                     pagesByTags[tag] = [ key ]
 
-    for key in pagesByTags.keys(): 
-        log.info(f"{key}:{pagesByTags[key]}")
-
     #Call bulk edit on each tag to update pages with tag
     for key in pagesByTags.keys():
-        log.info(f"Bulk updating pages for tag {key}")
-        #make the json body
+        log.info(f"Bulk updating pages for tag {key} with documents {pagesByTags[key]}")
+        
         body = {
             "documents": pagesByTags[key],
             "method": "modify_tags",
@@ -165,13 +168,27 @@ while nextPageUrl is not None and docs < maxDocsToProcess:
                 "remove_tags": []
             }
         }
+        editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+        log.debug(editResponse)
 
-        #call bulk edit
-        # editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-        # log.debug(docResponse)
+        if editResponse.status_code != 200:
+            log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
 
-        # if editResponse.status_code != 200:
-        #     log.error(f"Failed to bulk edit for tag {key}.  Full response is {docResponse}")
+    #call bulk edit for the document type
+    log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
+    
+    body = {
+        "documents": mapDocuments,
+        "method": "set_document_type",
+        "parameters": {
+            "document_type": mapDocumentTypeId
+        }
+    }
+    editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+    log.debug(docResponse)
+
+    if editResponse.status_code != 200:
+        log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
 
     nextPageUrl = rawJson["next"]
 # end while
