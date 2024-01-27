@@ -14,7 +14,7 @@ log.info("Starting")
 
 #config
 mapDocumentTypeId = 1
-maxDocsToProcess = 10
+maxDocsToProcess = 10000
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
@@ -50,7 +50,7 @@ tagsToAssign = [
     {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold"], "excludeWords": []},
     {"name":"City/Village.", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
-    {"name":"Forest", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"Forest", "id":None, "docIds": [], "synonyms": ["Glade", "Woods"], "excludeWords": []},
     {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
     {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Jungle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
@@ -61,7 +61,7 @@ tagsToAssign = [
     {"name":"Fey", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Scrub", "id":None, "docIds": [], "synonyms": ["Waste"], "excludeWords": []},
     {"name":"Sky", "id":None, "docIds": [], "synonyms": ["Air"], "excludeWords": []},
-    {"name":"Tavern/Inn", "id":None, "docIds": [], "synonyms": ["Tavern", "Inn", "Bar"], "excludeWords": []},
+    {"name":"Tavern/Inn", "id":None, "docIds": [], "synonyms": ["Tavern", "Inn", "Bar", "Saloon"], "excludeWords": []},
     {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
     {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave"], "excludeWords": []},
@@ -176,7 +176,7 @@ while nextPageUrl is not None and docs < maxDocsToProcess:
 
     #call bulk edit for the document type
     log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
-    
+
     body = {
         "documents": mapDocuments,
         "method": "set_document_type",
