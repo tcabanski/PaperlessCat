@@ -14,7 +14,7 @@ log.info("Starting")
 
 #config
 mapDocumentTypeId = 1
-maxDocsToProcess = 10
+maxDocsToProcess = 999000
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
