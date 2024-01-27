@@ -14,7 +14,7 @@ log.info("Starting")
 
 #config
 mapDocumentTypeId = 1
-maxDocsToProcess = 10000
+maxDocsToProcess = 10
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
@@ -86,7 +86,11 @@ while nextPageUrl is not None:
 docs = 0
 nextPageUrl = "http://localhost:8000/api/documents/"
 mapDocuments = []
-while nextPageUrl is not None and docs < maxDocsToProcess:
+while nextPageUrl is not None:
+
+    if docs >= maxDocsToProcess:
+        break
+
     pagesToUpdate = {}
     response = requests.get(nextPageUrl, auth = ("tom", "paperless"))
     rawJson = response.json()
