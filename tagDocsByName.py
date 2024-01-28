@@ -97,7 +97,9 @@ response = requests.get(pageUrl, auth = ("tom", "paperless"))
 rawJson = response.json()
 log.debug(rawJson)
 
-log.info(f"Processing {len(rawJson["all"])} documents")
+docsToProcess = len(rawJson["all"])
+
+log.info(f"Processing {docsToProcess} documents")
 for docId in rawJson["all"]:
     log.debug(f"get docId {docId}")
 
@@ -148,10 +150,9 @@ for docId in rawJson["all"]:
         break
 
     if docs % 10 == 0:
-        log.info(f"processed {docs} documents")
-
-                
-log.info(f"Bulk update being prepared for {docs}")
+        log.info(f"processed {docs} of {docsToProcess} documents")
+               
+log.info(f"Processing complete. Bulk update being prepared for {docs} documents")
 #build dictionary keyed by tag where each tag has the list of pages for the tag
 pagesByTags = {}
 for key in pagesToUpdate.keys():
