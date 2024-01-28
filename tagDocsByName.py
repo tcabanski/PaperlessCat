@@ -3,6 +3,7 @@ from collections import namedtuple
 import json
 import logging
 import pathlib
+import sys
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -25,17 +26,6 @@ def tagIdOfName(name, tags, oldId):
     return oldId
 
 # Find the ID of key tags
-gridTagId = None
-nightTagId = None
-snowTagId = None
-rainTagId = None
-fogTagId = None
-lavaTagId = None
-fireTagId = None
-desertTagId = None
-astralTagId = None
-bloodTagId = None
-
 tagsToAssign = [
     {"name":"Grid", "id": None, "docIds": [], "synonyms": [], "excludeWords": ["No", "Non", "less"]},
     {"name":"Night", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
@@ -50,7 +40,7 @@ tagsToAssign = [
     {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold", "Gate", "Rampart", "Wall"], "excludeWords": []},
-    {"name":"City/Village.", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
+    {"name":"City/Village", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
     {"name":"Forest", "id":None, "docIds": [], "synonyms": ["Glade", "Woods"], "excludeWords": []},
     {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
     {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
@@ -68,7 +58,7 @@ tagsToAssign = [
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
     {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
     {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway"], "excludeWords": []},
-    {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Apocothery", "Potion"], "excludeWords": []}
+    {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Potion", "Apothecary"], "excludeWords": []}
 ]
 
 pageUrl = "http://localhost:8000/api/tags/"
@@ -86,6 +76,13 @@ while pageUrl is not None:
 
     pageUrl = rawJson["next"]
 # end while
+
+# validate that all tags have assigned paperless ids
+for tagToAssign in tagsToAssign:
+    if tagToAssign["id"] is None:
+        errorMessage = f"Tag {tagToAssign["name"]} was not found in paperless!"
+        log.error(errorMessage)
+        sys.exit("EXITING: " + errorMessage)
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
@@ -166,12 +163,12 @@ log.info(f"Processing complete. Bulk update being prepared for {docs} documents"
 #build dictionary keyed by tag where each tag has the list of pages for the tag
 pagesByTags = {}
 for key in pagesToUpdate.keys():
-    for tag in pagesToUpdate[key]:
-        if tag is not None:
-            if tag in pagesByTags:
-                pagesByTags[tag].append(key)
+    for tagToAssign in pagesToUpdate[key]:
+        if tagToAssign is not None:
+            if tagToAssign in pagesByTags:
+                pagesByTags[tagToAssign].append(key)
             else:
-                pagesByTags[tag] = [ key ]
+                pagesByTags[tagToAssign] = [ key ]
 #end for
 
 #Call bulk edit on each tag to update pages with tag
