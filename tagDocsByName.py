@@ -15,7 +15,7 @@ log.info("Starting")
 #config
 mapDocumentTypeId = 1
 maxDocsToProcess = 999000
-onlyProcessEmptyDocType = True
+onlyProcessEmptyDocType = False
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
@@ -66,8 +66,9 @@ tagsToAssign = [
     {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
     {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
-    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []}
+    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
     {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway"], "excludeWords": []},
+    {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Apocothery"], "excludeWords": []}
 ]
 
 pageUrl = "http://localhost:8000/api/tags/"
