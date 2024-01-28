@@ -49,7 +49,7 @@ tagsToAssign = [
     {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold"], "excludeWords": []},
+    {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold", "Gate", "Rampart", "Wall"], "excludeWords": []},
     {"name":"City/Village.", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
     {"name":"Forest", "id":None, "docIds": [], "synonyms": ["Glade", "Woods"], "excludeWords": []},
     {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
@@ -66,7 +66,7 @@ tagsToAssign = [
     {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
     {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
-    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith"], "excludeWords": []}
+    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []}
 ]
 
 pageUrl = "http://localhost:8000/api/tags/"
