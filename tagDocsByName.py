@@ -65,7 +65,8 @@ tagsToAssign = [
     {"name":"Tavern/Inn", "id":None, "docIds": [], "synonyms": ["Tavern", "Inn", "Bar", "Saloon"], "excludeWords": []},
     {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
     {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
-    {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave"], "excludeWords": []},
+    {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
+    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith"], "excludeWords": []}
 ]
 
 pageUrl = "http://localhost:8000/api/tags/"
