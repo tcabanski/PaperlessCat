@@ -15,6 +15,7 @@ log.info("Starting")
 #config
 mapDocumentTypeId = 1
 maxDocsToProcess = 999000
+onlyProcessEmptyDocType = True
 
 def tagIdOfName(name, tags, oldId):
     for tag in tags:
@@ -67,9 +68,9 @@ tagsToAssign = [
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave"], "excludeWords": []},
 ]
 
-nextPageUrl = "http://localhost:8000/api/tags/"
-while nextPageUrl is not None:
-    response = requests.get(nextPageUrl, auth = ("tom", "paperless"))
+pageUrl = "http://localhost:8000/api/tags/"
+while pageUrl is not None:
+    response = requests.get(pageUrl, auth = ("tom", "paperless"))
     rawJson = response.json()
     log.debug(rawJson)
 
@@ -79,120 +80,119 @@ while nextPageUrl is not None:
         tagToAssign["id"] = tagIdOfName(tagToAssign["name"], tags, tagToAssign["id"])
         log.info(f"{tagToAssign["name"]}:{tagToAssign["id"]}")
 
-    nextPageUrl = rawJson["next"]
+    pageUrl = rawJson["next"]
 # end while
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
-nextPageUrl = "http://localhost:8000/api/documents/"
+if onlyProcessEmptyDocType:
+    pageUrl = "http://localhost:8000/api/documents/?document_type__isnull=1"
+else:
+    pageUrl = "http://localhost:8000/api/documents/"
+
 mapDocuments = []
-while nextPageUrl is not None:
 
-    if docs >= maxDocsToProcess:
-        break
+pagesToUpdate = {}
+response = requests.get(pageUrl, auth = ("tom", "paperless"))
+rawJson = response.json()
+log.debug(rawJson)
 
-    pagesToUpdate = {}
-    response = requests.get(nextPageUrl, auth = ("tom", "paperless"))
-    rawJson = response.json()
-    log.debug(rawJson)
+log.info(f"Processing {len(rawJson["all"])} documents")
+for docId in rawJson["all"]:
+    log.debug(f"get docId {docId}")
 
-    for docId in rawJson["all"]:
-        log.debug(f"get docId {docId}")
+    docResponse = requests.get(f"http://localhost:8000/api/documents/{docId}/", auth = ("tom", "paperless"))
+    log.debug(docResponse)
 
-        docResponse = requests.get(f"http://localhost:8000/api/documents/{docId}/", auth = ("tom", "paperless"))
-        log.debug(docResponse)
+    parsedDocResponse = json.loads(docResponse.text)
+    title = parsedDocResponse["title"]
+    id = parsedDocResponse["id"]
+    originalFileName = parsedDocResponse["original_file_name"]
 
-        parsedDocResponse = json.loads(docResponse.text)
-        title = parsedDocResponse["title"]
-        id = parsedDocResponse["id"]
-        originalFileName = parsedDocResponse["original_file_name"]
+    if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
+        mapDocuments.append(id)
 
-        if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
-            mapDocuments.append(id)
+    for tagToAssign in tagsToAssign:
+        #Tag if the title includes the name of the tag and one of the exclude words is not present
+        if title.lower().find(tagToAssign["name"].lower()) > -1:
+            excluded = False
+            for excludeWord in tagToAssign["excludeWords"]:
+                if title.lower().find(excludeWord.lower()) > -1:
+                    excluded = True
+                    break;
+            
+            if not excluded:
+                if id in pagesToUpdate:
+                    if tagToAssign["id"] not in pagesToUpdate[id]:
+                        pagesToUpdate[id].append(tagToAssign["id"])
+                else:
+                    pagesToUpdate[id] = [tagToAssign["id"]]
 
-        for tagToAssign in tagsToAssign:
-            #Tag if the title includes the name of the tag and one of the exclude words is not present
-            if title.lower().find(tagToAssign["name"].lower()) > -1:
+        #Tag if the title includes one of the synomnyms and not one of the exluded words
+        for synonym in tagToAssign["synonyms"]:
+            if title.lower().find(synonym.lower()) > -1:
                 excluded = False
                 for excludeWord in tagToAssign["excludeWords"]:
                     if title.lower().find(excludeWord.lower()) > -1:
                         excluded = True
                         break;
-                
-                if not excluded:
-                    if id in pagesToUpdate:
-                        if tagToAssign["id"] not in pagesToUpdate[id]:
-                            pagesToUpdate[id].append(tagToAssign["id"])
-                    else:
-                        pagesToUpdate[id] = [tagToAssign["id"]]
 
-            #Tag if the title includes one of the synomnyms and not one of the exluded words
-            for synonym in tagToAssign["synonyms"]:
-                if title.lower().find(synonym.lower()) > -1:
-                    excluded = False
-                    for excludeWord in tagToAssign["excludeWords"]:
-                        if title.lower().find(excludeWord.lower()) > -1:
-                            excluded = True
-                            break;
-
-                    if id in pagesToUpdate:
-                        if tagToAssign["id"] not in pagesToUpdate[id]:
-                            pagesToUpdate[id].append(tagToAssign["id"])
-                    else:
-                        pagesToUpdate[id] = [tagToAssign["id"]]
-
-        docs += 1
-        if docs == maxDocsToProcess:
-            break
-
-        if docs % 10 == 0:
-            log.info(f"processed {docs} documents")
-
-                    
-    log.info(f"Bulk update being prepared for {docs}")
-    #build dictionary keyed by tag where each tag has the list of pages for the tag
-    pagesByTags = {}
-    for key in pagesToUpdate.keys():
-        for tag in pagesToUpdate[key]:
-            if tag is not None:
-                if tag in pagesByTags:
-                    pagesByTags[tag].append(key)
+                if id in pagesToUpdate:
+                    if tagToAssign["id"] not in pagesToUpdate[id]:
+                        pagesToUpdate[id].append(tagToAssign["id"])
                 else:
-                    pagesByTags[tag] = [ key ]
+                    pagesToUpdate[id] = [tagToAssign["id"]]
 
-    #Call bulk edit on each tag to update pages with tag
-    for key in pagesByTags.keys():
-        log.info(f"Bulk updating pages for tag {key} with documents {pagesByTags[key]}")
-        
-        body = {
-            "documents": pagesByTags[key],
-            "method": "modify_tags",
-            "parameters": {
-                "add_tags": [ key ],
-                "remove_tags": []
-            }
-        }
-        editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-        log.debug(editResponse)
+    docs += 1
+    if docs == maxDocsToProcess:
+        break
 
-        if editResponse.status_code != 200:
-            log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
+    if docs % 10 == 0:
+        log.info(f"processed {docs} documents")
 
-    #call bulk edit for the document type
-    log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
+                
+log.info(f"Bulk update being prepared for {docs}")
+#build dictionary keyed by tag where each tag has the list of pages for the tag
+pagesByTags = {}
+for key in pagesToUpdate.keys():
+    for tag in pagesToUpdate[key]:
+        if tag is not None:
+            if tag in pagesByTags:
+                pagesByTags[tag].append(key)
+            else:
+                pagesByTags[tag] = [ key ]
 
+#Call bulk edit on each tag to update pages with tag
+for key in pagesByTags.keys():
+    log.info(f"Bulk updating pages for tag {key} with documents {pagesByTags[key]}")
+    
     body = {
-        "documents": mapDocuments,
-        "method": "set_document_type",
+        "documents": pagesByTags[key],
+        "method": "modify_tags",
         "parameters": {
-            "document_type": mapDocumentTypeId
+            "add_tags": [ key ],
+            "remove_tags": []
         }
     }
     editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-    log.debug(docResponse)
+    log.debug(editResponse)
 
     if editResponse.status_code != 200:
-        log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
+        log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
 
-    nextPageUrl = rawJson["next"]
+#call bulk edit for the document type
+log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
+
+body = {
+    "documents": mapDocuments,
+    "method": "set_document_type",
+    "parameters": {
+        "document_type": mapDocumentTypeId
+    }
+}
+editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+log.debug(docResponse)
+
+if editResponse.status_code != 200:
+    log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
 # end while
