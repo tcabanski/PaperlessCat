@@ -80,6 +80,7 @@ while pageUrl is not None:
     for tagToAssign in tagsToAssign:
         tagToAssign["id"] = tagIdOfName(tagToAssign["name"], tags, tagToAssign["id"])
         log.info(f"{tagToAssign["name"]}:{tagToAssign["id"]}")
+    #end for
 
     pageUrl = rawJson["next"]
 # end while
@@ -114,6 +115,7 @@ for docId in rawJson["all"]:
 
     if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
         mapDocuments.append(id)
+    #end if
 
     for tagToAssign in tagsToAssign:
         #Tag if the title includes the name of the tag and one of the exclude words is not present
@@ -123,6 +125,7 @@ for docId in rawJson["all"]:
                 if title.lower().find(excludeWord.lower()) > -1:
                     excluded = True
                     break;
+            #end for
             
             if not excluded:
                 if id in pagesToUpdate:
@@ -139,12 +142,15 @@ for docId in rawJson["all"]:
                     if title.lower().find(excludeWord.lower()) > -1:
                         excluded = True
                         break;
+                #end for
 
                 if id in pagesToUpdate:
                     if tagToAssign["id"] not in pagesToUpdate[id]:
                         pagesToUpdate[id].append(tagToAssign["id"])
                 else:
                     pagesToUpdate[id] = [tagToAssign["id"]]
+        #end for
+    #end for
 
     docs += 1
     if docs == maxDocsToProcess:
@@ -152,6 +158,7 @@ for docId in rawJson["all"]:
 
     if docs % 10 == 0:
         log.info(f"processed {docs} of {docsToProcess} documents")
+#end for
                
 log.info(f"Processing complete. Bulk update being prepared for {docs} documents")
 #build dictionary keyed by tag where each tag has the list of pages for the tag
@@ -163,6 +170,7 @@ for key in pagesToUpdate.keys():
                 pagesByTags[tag].append(key)
             else:
                 pagesByTags[tag] = [ key ]
+#end for
 
 #Call bulk edit on each tag to update pages with tag
 for key in pagesByTags.keys():
@@ -181,6 +189,7 @@ for key in pagesByTags.keys():
 
     if editResponse.status_code != 200:
         log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
+#end for
 
 #call bulk edit for the document type
 log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
@@ -197,4 +206,3 @@ log.debug(docResponse)
 
 if editResponse.status_code != 200:
     log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
-# end while
