@@ -45,7 +45,7 @@ tagsToAssign = [
     {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
     {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Jungle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Lake/Ocean", "id":None, "docIds": [], "synonyms": ["Lake", "Ocean", "Sea", "Beach", "Harbor", "Cove", "Docks", "Flood"], "excludeWords": []},
+    {"name":"Lake/Ocean", "id":None, "docIds": [], "synonyms": ["Lake", "Ocean", "Sea", "Beach", "Harbor", "Cove", "Dock", "Flood", "Pier"], "excludeWords": []},
     {"name":"Mountain", "id":None, "docIds": [], "synonyms": ["Cliff", "Bluff"], "excludeWords": []},
     {"name":"River", "id":None, "docIds": [], "synonyms": ["Stream", "Creek"], "excludeWords": []},
     {"name":"Ruins", "id":None, "docIds": [], "synonyms": ["Broken", "Abandoned"], "excludeWords": []},
