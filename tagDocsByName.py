@@ -15,6 +15,7 @@ log.info("Starting")
 
 #config
 mapDocumentTypeId = 1
+pdfDocumentTypeId = 13
 maxDocsToProcess = 999000
 onlyProcessEmptyDocType = True
 
@@ -93,6 +94,7 @@ else:
     pageUrl = "http://localhost:8000/api/documents/"
 
 mapDocuments = []
+pdfDocuments = []
 
 pagesToUpdate = {}
 response = requests.get(pageUrl, auth = ("tom", "paperless"))
@@ -115,6 +117,10 @@ for docId in rawJson["all"]:
 
     if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
         mapDocuments.append(id)
+    #end if
+        
+    if pathlib.Path(originalFileName).suffix.lower() == ".pdf":
+        pdfDocuments.append(id)
     #end if
 
     for tagToAssign in tagsToAssign:
@@ -191,7 +197,7 @@ for key in pagesByTags.keys():
         log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
 #end for
 
-#call bulk edit for the document type
+#call bulk edit for the map document type
 log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
 
 body = {
@@ -206,3 +212,19 @@ log.debug(docResponse)
 
 if editResponse.status_code != 200:
     log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
+
+#call bulk edit for the pdf document type
+log.info(f"Bulk updating {len(pdfDocuments)} documents for uncategorized document type with id {pdfDocumentTypeId}. Documents: {pdfDocuments}")
+
+body = {
+    "documents": pdfDocuments,
+    "method": "set_document_type",
+    "parameters": {
+        "document_type": pdfDocumentTypeId
+    }
+}
+editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+log.debug(docResponse)
+
+if editResponse.status_code != 200:
+    log.error(f"Failed to bulk edit for uncategorized document type with id {pdfDocumentTypeId}.  Full response is {editResponse}")
