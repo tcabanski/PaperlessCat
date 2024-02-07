@@ -208,7 +208,7 @@ body = {
     }
 }
 editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-log.debug(docResponse)
+log.debug(editResponse)
 
 if editResponse.status_code != 200:
     log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
@@ -224,7 +224,7 @@ body = {
     }
 }
 editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-log.debug(docResponse)
+log.debug(editResponse)
 
 if editResponse.status_code != 200:
     log.error(f"Failed to bulk edit for uncategorized document type with id {pdfDocumentTypeId}.  Full response is {editResponse}")
