@@ -60,7 +60,8 @@ tagsToAssign = [
     {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
     {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway"], "excludeWords": []},
     {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Potion", "Apothecary"], "excludeWords": []},
-    {"name":"Swamp", "id":None, "docIds": [], "synonyms": ["Bog", "Marsh", "Fen"], "excludeWords": []}
+    {"name":"Swamp", "id":None, "docIds": [], "synonyms": ["Bog", "Marsh", "Fen"], "excludeWords": []},
+    {"name":"Phased", "id":None, "docIds": [], "synonyms": ["phase"], "excludeWords": []}
 ]
 
 pageUrl = "http://localhost:8000/api/tags/"
