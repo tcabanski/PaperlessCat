@@ -87,6 +87,17 @@ for tagToAssign in tagsToAssign:
         log.error(errorMessage)
         sys.exit("EXITING: " + errorMessage)
 
+# get the list of correspondents and let the user choose one to assign (or none)
+response = requests.get(f"http://localhost:8000/api/correspondents/?full_perms=true", auth = ("tom", "paperless"))
+rawJson = response.json()
+log.debug(rawJson)
+print("0: None") 
+for correspondent in rawJson["results"]:
+    print(f"{correspondent["id"]}: {correspondent["name"]}") 
+# end if       
+
+selectedCorrespondent = input("Which correspondent should be assigned?")
+
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 if onlyProcessEmptyDocType:
@@ -96,15 +107,15 @@ else:
 
 mapDocuments = []
 pdfDocuments = []
-
+allDocuments = []
 pagesToUpdate = {}
 response = requests.get(pageUrl, auth = ("tom", "paperless"))
 rawJson = response.json()
 log.debug(rawJson)
 
 docsToProcess = len(rawJson["all"])
-
 log.info(f"Processing {docsToProcess} documents")
+
 for docId in rawJson["all"]:
     log.debug(f"get docId {docId}")
 
@@ -115,6 +126,8 @@ for docId in rawJson["all"]:
     title = parsedDocResponse["title"]
     id = parsedDocResponse["id"]
     originalFileName = parsedDocResponse["original_file_name"]
+
+    allDocuments.append(id)
 
     if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
         mapDocuments.append(id)
@@ -197,6 +210,24 @@ for key in pagesByTags.keys():
     if editResponse.status_code != 200:
         log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
 #end for
+        
+#call bulk edit for the correspondent
+if int(selectedCorrespondent) != 0:
+    log.info(f"Bulk updating {len(allDocuments)} documents for correspondent with id {selectedCorrespondent}. Documents: {allDocuments}")
+
+    body = {
+        "documents": allDocuments,
+        "method": "set_correspondent",
+        "parameters": {
+            "correspondent": int(selectedCorrespondent)
+        }
+    }
+    editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+    log.debug(editResponse)
+
+    if editResponse.status_code != 200:
+        log.error(f"Failed to bulk edit for correspondent with id {selectedCorrespondent}.  Full response is {editResponse}")
+#end if
 
 #call bulk edit for the map document type
 log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
