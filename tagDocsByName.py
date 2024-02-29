@@ -71,14 +71,16 @@ while pageUrl is not None:
     log.debug(rawJson)
 
     tags = rawJson["results"]
-    log.info("---------------------------------------------------")
     for tagToAssign in tagsToAssign:
         tagToAssign["id"] = tagIdOfName(tagToAssign["name"], tags, tagToAssign["id"])
-        log.info(f"{tagToAssign["name"]}:{tagToAssign["id"]}")
     #end for
 
     pageUrl = rawJson["next"]
 # end while
+    
+for tagToAssign in tagsToAssign:
+    log.info(f"{tagToAssign["name"]}:{tagToAssign["id"]}")
+#end for
 
 # validate that all tags have assigned paperless ids
 for tagToAssign in tagsToAssign:
@@ -91,12 +93,21 @@ for tagToAssign in tagsToAssign:
 response = requests.get(f"http://localhost:8000/api/correspondents/?full_perms=true", auth = ("tom", "paperless"))
 rawJson = response.json()
 log.debug(rawJson)
-print("0: None") 
-for correspondent in rawJson["results"]:
-    print(f"{correspondent["id"]}: {correspondent["name"]}") 
-# end if       
 
-selectedCorrespondent = input("Which correspondent should be assigned?")
+print("\n\n")
+row = 0
+for correspondent in rawJson["results"]:
+    data = f"{correspondent["id"]:02d}: {correspondent["name"]}".ljust(40)
+    if row % 2 == 0: 
+        print(f"{data}\t", end = "") 
+    else:
+        print(f"{data}")
+
+    row += 1
+    #end if
+#end for     
+
+selectedCorrespondent = input("Which correspondent should be assigned (0 for none)?")
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
