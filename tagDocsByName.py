@@ -36,7 +36,7 @@ tagsToAssign = [
     {"name":"Lava", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Fire", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Desert", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Astral", "id":None, "docIds": [], "synonyms": ["Asteroid", "Starship", "Star", "Planet", "Alien", "SciFi"], "excludeWords": []},
+    {"name":"Astral", "id":None, "docIds": [], "synonyms": ["Asteroid", "Starship", "Star", "Planet", "Alien", "SciFi", "Space", "Orbital"], "excludeWords": []},
     {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
