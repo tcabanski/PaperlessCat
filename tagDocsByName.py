@@ -107,6 +107,7 @@ for correspondent in rawJson["results"]:
     #end if
 #end for     
 
+print("")
 selectedCorrespondent = input("Which correspondent should be assigned (0 for none)?")
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
