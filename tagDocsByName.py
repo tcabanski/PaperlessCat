@@ -90,22 +90,27 @@ for tagToAssign in tagsToAssign:
         sys.exit("EXITING: " + errorMessage)
 
 # get the list of correspondents and let the user choose one to assign (or none)
-response = requests.get(f"http://localhost:8000/api/correspondents/?full_perms=true", auth = ("tom", "paperless"))
-rawJson = response.json()
-log.debug(rawJson)
-
+pageUrl = "http://localhost:8000/api/correspondents/?full_perms=true"
 print("\n\n")
 row = 0
-for correspondent in rawJson["results"]:
-    data = f"{correspondent["id"]:02d}: {correspondent["name"]}".ljust(40)
-    if row % 2 == 0: 
-        print(f"{data}\t", end = "") 
-    else:
-        print(f"{data}")
+while pageUrl is not None:
+    response = requests.get(pageUrl, auth = ("tom", "paperless"))
+    rawJson = response.json()
+    log.debug(rawJson)
 
-    row += 1
-    #end if
-#end for     
+    for correspondent in rawJson["results"]:
+        data = f"{correspondent["id"]:02d}: {correspondent["name"]}".ljust(40)
+        if row % 2 == 0: 
+            print(f"{data}\t", end = "") 
+        else:
+            print(f"{data}")
+
+        row += 1
+        #end if
+    #end for 
+    
+    pageUrl = rawJson["next"]
+#end while
 
 print("")
 selectedCorrespondent = input("Which correspondent should be assigned (0 for none)?")
@@ -128,69 +133,75 @@ log.debug(rawJson)
 docsToProcess = len(rawJson["all"])
 log.info(f"Processing {docsToProcess} documents")
 
-for docId in rawJson["all"]:
-    log.debug(f"get docId {docId}")
+while pageUrl is not None:
+    response = requests.get(pageUrl, auth = ("tom", "paperless"))
+    rawJson = response.json()
+    log.debug(rawJson)
 
-    docResponse = requests.get(f"http://localhost:8000/api/documents/{docId}/", auth = ("tom", "paperless"))
-    log.debug(docResponse)
+    for docResult in rawJson["results"]:
+        docId = docResult["id"]
+        log.debug(f"processing docId {docId}")
 
-    parsedDocResponse = json.loads(docResponse.text)
-    title = parsedDocResponse["title"]
-    id = parsedDocResponse["id"]
-    originalFileName = parsedDocResponse["original_file_name"]
+        title = docResult["title"]
+        id = docResult["id"]
+        originalFileName = docResult["original_file_name"]
 
-    allDocuments.append(id)
+        allDocuments.append(docId)
 
-    if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
-        mapDocuments.append(id)
-    #end if
+        if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
+            mapDocuments.append(docId)
+        #end if
         
-    if pathlib.Path(originalFileName).suffix.lower() == ".pdf":
-        pdfDocuments.append(id)
-    #end if
+        if pathlib.Path(originalFileName).suffix.lower() == ".pdf":
+            pdfDocuments.append(docId)
+        #end if
 
-    for tagToAssign in tagsToAssign:
-        #Tag if the title includes the name of the tag and one of the exclude words is not present
-        if title.lower().find(tagToAssign["name"].lower()) > -1:
-            excluded = False
-            for excludeWord in tagToAssign["excludeWords"]:
-                if title.lower().find(excludeWord.lower()) > -1:
-                    excluded = True
-                    break;
-            #end for
-            
-            if not excluded:
-                if id in pagesToUpdate:
-                    if tagToAssign["id"] not in pagesToUpdate[id]:
-                        pagesToUpdate[id].append(tagToAssign["id"])
-                else:
-                    pagesToUpdate[id] = [tagToAssign["id"]]
-
-        #Tag if the title includes one of the synomnyms and not one of the exluded words
-        for synonym in tagToAssign["synonyms"]:
-            if title.lower().find(synonym.lower()) > -1:
+        for tagToAssign in tagsToAssign:
+            #Tag if the title includes the name of the tag and one of the exclude words is not present
+            if title.lower().find(tagToAssign["name"].lower()) > -1:
                 excluded = False
                 for excludeWord in tagToAssign["excludeWords"]:
                     if title.lower().find(excludeWord.lower()) > -1:
                         excluded = True
                         break;
                 #end for
+                
+                if not excluded:
+                    if id in pagesToUpdate:
+                        if tagToAssign["id"] not in pagesToUpdate[docId]:
+                            pagesToUpdate[docId].append(tagToAssign["id"])
+                    else:
+                        pagesToUpdate[docId] = [tagToAssign["id"]]
+                    #end if
+                #end if
+            #end if
 
-                if id in pagesToUpdate:
-                    if tagToAssign["id"] not in pagesToUpdate[id]:
-                        pagesToUpdate[id].append(tagToAssign["id"])
-                else:
-                    pagesToUpdate[id] = [tagToAssign["id"]]
+            #Tag if the title includes one of the synomnyms and not one of the exluded words
+            for synonym in tagToAssign["synonyms"]:
+                if title.lower().find(synonym.lower()) > -1:
+                    excluded = False
+                    for excludeWord in tagToAssign["excludeWords"]:
+                        if title.lower().find(excludeWord.lower()) > -1:
+                            excluded = True
+                            break;
+                    #end for
+
+                    if id in pagesToUpdate:
+                        if tagToAssign["id"] not in pagesToUpdate[id]:
+                            pagesToUpdate[docId].append(tagToAssign["id"])
+                    else:
+                        pagesToUpdate[docId] = [tagToAssign["id"]]
+            #end for
         #end for
+
+        docs += 1
+        if docs == maxDocsToProcess:
+            break
     #end for
-
-    docs += 1
-    if docs == maxDocsToProcess:
-        break
-
-    if docs % 10 == 0:
-        log.info(f"processed {docs} of {docsToProcess} documents")
-#end for
+        
+    pageUrl = rawJson["next"]
+    log.info(f"processed {docs} of {docsToProcess} documents")
+#end while
                
 log.info(f"Processing complete. Bulk update being prepared for {docs} documents")
 #build dictionary keyed by tag where each tag has the list of pages for the tag
