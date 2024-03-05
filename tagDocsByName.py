@@ -118,9 +118,9 @@ selectedCorrespondent = input("Which correspondent should be assigned (0 for non
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 if onlyProcessEmptyDocType:
-    pageUrl = "http://localhost:8000/api/documents/?document_type__isnull=1"
+    pageUrl = "http://localhost:8000/api/documents/?document_type__isnull=1&page_size=100000"
 else:
-    pageUrl = "http://localhost:8000/api/documents/"
+    pageUrl = "http://localhost:8000/api/documents/?sort=added&page-size=100000"
 
 mapDocuments = []
 pdfDocuments = []
@@ -143,7 +143,6 @@ while pageUrl is not None:
         log.debug(f"processing docId {docId}")
 
         title = docResult["title"]
-        id = docResult["id"]
         originalFileName = docResult["original_file_name"]
 
         allDocuments.append(docId)
@@ -231,7 +230,7 @@ for key in pagesByTags.keys():
     log.debug(editResponse)
 
     if editResponse.status_code != 200:
-        log.error(f"Failed to bulk edit for tag {key}.  Full response is {editResponse}")
+        log.error(f"Failed to bulk edit for tag {key}.  Error is {editResponse.reason}")
 #end for
         
 #call bulk edit for the correspondent
@@ -249,7 +248,7 @@ if int(selectedCorrespondent) != 0:
     log.debug(editResponse)
 
     if editResponse.status_code != 200:
-        log.error(f"Failed to bulk edit for correspondent with id {selectedCorrespondent}.  Full response is {editResponse}")
+        log.error(f"Failed to bulk edit for correspondent with id {selectedCorrespondent}.  Error is {editResponse.reason}")
 #end if
 
 #call bulk edit for the map document type
@@ -266,7 +265,7 @@ editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", a
 log.debug(editResponse)
 
 if editResponse.status_code != 200:
-    log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Full response is {editResponse}")
+    log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Error is {editResponse.reason}")
 
 #call bulk edit for the pdf document type
 log.info(f"Bulk updating {len(pdfDocuments)} documents for uncategorized document type with id {pdfDocumentTypeId}. Documents: {pdfDocuments}")
@@ -282,4 +281,4 @@ editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", a
 log.debug(editResponse)
 
 if editResponse.status_code != 200:
-    log.error(f"Failed to bulk edit for uncategorized document type with id {pdfDocumentTypeId}.  Full response is {editResponse}")
+    log.error(f"Failed to bulk edit for uncategorized document type with id {pdfDocumentTypeId}.  Error is {editResponse.reason}")
