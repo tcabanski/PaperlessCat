@@ -1,9 +1,10 @@
 import requests
 from collections import namedtuple
-import json
 import logging
 import pathlib
-import sys
+from tags import tags_to_assign
+from tags import validate_tags
+from correspondent import choose_correspondent
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -14,271 +15,149 @@ log.setLevel(logging.INFO)
 log.info("Starting")
 
 #config
-mapDocumentTypeId = 1
-pdfDocumentTypeId = 13
-maxDocsToProcess = 999000
-onlyProcessEmptyDocType = True
+map_document_type_id = 1
+pdf_document_type_id = 13
+max_docs_to_process = 999000
+only_process_empty_doc_type = True
+AUTH_CREDENTIALS = ("tom", "paperless")
 
-def tagIdOfName(name, tags, oldId):
-    for tag in tags:
-        if tag["name"] == name:
-            return tag["id"]
-        
-    return oldId
-
-# Find the ID of key tags
-tagsToAssign = [
-    {"name":"Grid", "id": None, "docIds": [], "synonyms": [], "excludeWords": ["No", "Non", "less"]},
-    {"name":"Night", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Snow", "id":None, "docIds": [], "synonyms": ["Winter"], "excludeWords": []},
-    {"name":"Rain", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Fog", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Lava", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Fire", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Desert", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Astral", "id":None, "docIds": [], "synonyms": ["Asteroid", "Starship", "Star", "Planet", "Alien", "SciFi", "Space", "Orbital"], "excludeWords": []},
-    {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Camp", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Castle/Fort/etc.", "id":None, "docIds": [], "synonyms": ["Castle", "Fort", "Stronghold", "Gate", "Rampart", "Wall", "Keep"], "excludeWords": []},
-    {"name":"City/Village", "id":None, "docIds": [], "synonyms": ["City", "Village", "Town"], "excludeWords": []},
-    {"name":"Forest", "id":None, "docIds": [], "synonyms": ["Glade", "Woods"], "excludeWords": []},
-    {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
-    {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Jungle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Lake/Ocean", "id":None, "docIds": [], "synonyms": ["Lake", "Ocean", "Sea", "Beach", "Harbor", "Cove", "Dock", "Flood", "Pier"], "excludeWords": []},
-    {"name":"Mountain", "id":None, "docIds": [], "synonyms": ["Cliff", "Bluff"], "excludeWords": []},
-    {"name":"River", "id":None, "docIds": [], "synonyms": ["Stream", "Creek"], "excludeWords": []},
-    {"name":"Ruins", "id":None, "docIds": [], "synonyms": ["Broken", "Abandoned", "Ruin"], "excludeWords": []},
-    {"name":"Fey", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
-    {"name":"Scrub", "id":None, "docIds": [], "synonyms": ["Waste"], "excludeWords": []},
-    {"name":"Sky", "id":None, "docIds": [], "synonyms": ["Air"], "excludeWords": []},
-    {"name":"Tavern/Inn", "id":None, "docIds": [], "synonyms": ["Tavern", "Inn", "Bar", "Saloon"], "excludeWords": []},
-    {"name":"Temple", "id":None, "docIds": [], "synonyms": ["Church", "Sacred", "Ritual"], "excludeWords": []},
-    {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
-    {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
-    {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
-    {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway"], "excludeWords": []},
-    {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Potion", "Apothecary"], "excludeWords": []},
-    {"name":"Swamp", "id":None, "docIds": [], "synonyms": ["Bog", "Marsh", "Fen"], "excludeWords": []},
-    {"name":"Phased", "id":None, "docIds": [], "synonyms": ["phase"], "excludeWords": []}
-]
-
-pageUrl = "http://localhost:8000/api/tags/"
-while pageUrl is not None:
-    response = requests.get(pageUrl, auth = ("tom", "paperless"))
-    rawJson = response.json()
-    log.debug(rawJson)
-
-    tags = rawJson["results"]
-    for tagToAssign in tagsToAssign:
-        tagToAssign["id"] = tagIdOfName(tagToAssign["name"], tags, tagToAssign["id"])
-    #end for
-
-    pageUrl = rawJson["next"]
-# end while
-    
-for tagToAssign in tagsToAssign:
-    log.info(f"{tagToAssign["name"]}:{tagToAssign["id"]}")
-#end for
-
-# validate that all tags have assigned paperless ids
-for tagToAssign in tagsToAssign:
-    if tagToAssign["id"] is None:
-        errorMessage = f"Tag {tagToAssign["name"]} was not found in paperless!"
-        log.error(errorMessage)
-        sys.exit("EXITING: " + errorMessage)
-
-# get the list of correspondents and let the user choose one to assign (or none)
-pageUrl = "http://localhost:8000/api/correspondents/?full_perms=true"
-print("\n\n")
-row = 0
-while pageUrl is not None:
-    response = requests.get(pageUrl, auth = ("tom", "paperless"))
-    rawJson = response.json()
-    log.debug(rawJson)
-
-    for correspondent in rawJson["results"]:
-        data = f"{correspondent["id"]:02d}: {correspondent["name"]}".ljust(40)
-        if row % 2 == 0: 
-            print(f"{data}\t", end = "") 
-        else:
-            print(f"{data}")
-
-        row += 1
-        #end if
-    #end for 
-    
-    pageUrl = rawJson["next"]
-#end while
-
-print("")
-selectedCorrespondent = input("Which correspondent should be assigned (0 for none)?")
+validate_tags(AUTH_CREDENTIALS)
+selected_correspondent = choose_correspondent(AUTH_CREDENTIALS)
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
-if onlyProcessEmptyDocType:
-    pageUrl = "http://localhost:8000/api/documents/?document_type__isnull=1&page_size=100000"
+if only_process_empty_doc_type:
+    page_url = "http://localhost:8000/api/documents/?document_type__isnull=1&page_size=100000"
 else:
-    pageUrl = "http://localhost:8000/api/documents/?sort=added&page-size=100000"
+    page_url = "http://localhost:8000/api/documents/?sort=added&page-size=100000"
 
-mapDocuments = []
-pdfDocuments = []
-allDocuments = []
-pagesToUpdate = {}
-response = requests.get(pageUrl, auth = ("tom", "paperless"))
-rawJson = response.json()
-log.debug(rawJson)
+map_documents = []
+pdf_documents = []
+all_documents = []
+pages_to_update = {}
+response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+raw_json = response.json()
+log.debug(raw_json)
 
-docsToProcess = len(rawJson["all"])
-log.info(f"Processing {docsToProcess} documents")
+docs_to_process = len(raw_json["all"])
+log.info(f"Processing {docs_to_process} documents")
 
-while pageUrl is not None:
-    response = requests.get(pageUrl, auth = ("tom", "paperless"))
-    rawJson = response.json()
-    log.debug(rawJson)
+while page_url is not None:
+    response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+    raw_json = response.json()
+    log.debug(raw_json)
 
-    for docResult in rawJson["results"]:
-        docId = docResult["id"]
+    for doc_result in raw_json["results"]:
+        docId = doc_result["id"]
         log.debug(f"processing docId {docId}")
 
-        title = docResult["title"]
-        originalFileName = docResult["original_file_name"]
+        title = doc_result["title"]
+        original_file_name = doc_result["original_file_name"]
 
-        allDocuments.append(docId)
+        all_documents.append(docId)
 
-        if pathlib.Path(originalFileName).suffix.lower() != ".pdf":
-            mapDocuments.append(docId)
+        if pathlib.Path(original_file_name).suffix.lower() != ".pdf":
+            map_documents.append(docId)
         #end if
         
-        if pathlib.Path(originalFileName).suffix.lower() == ".pdf":
-            pdfDocuments.append(docId)
+        if pathlib.Path(original_file_name).suffix.lower() == ".pdf":
+            pdf_documents.append(docId)
         #end if
 
-        for tagToAssign in tagsToAssign:
-            #Tag if the title includes the name of the tag and one of the exclude words is not present
-            if title.lower().find(tagToAssign["name"].lower()) > -1:
-                excluded = False
-                for excludeWord in tagToAssign["excludeWords"]:
-                    if title.lower().find(excludeWord.lower()) > -1:
-                        excluded = True
-                        break;
-                #end for
-                
-                if not excluded:
-                    if id in pagesToUpdate:
-                        if tagToAssign["id"] not in pagesToUpdate[docId]:
-                            pagesToUpdate[docId].append(tagToAssign["id"])
-                    else:
-                        pagesToUpdate[docId] = [tagToAssign["id"]]
-                    #end if
-                #end if
-            #end if
-
-            #Tag if the title includes one of the synomnyms and not one of the exluded words
-            for synonym in tagToAssign["synonyms"]:
-                if title.lower().find(synonym.lower()) > -1:
-                    excluded = False
-                    for excludeWord in tagToAssign["excludeWords"]:
-                        if title.lower().find(excludeWord.lower()) > -1:
-                            excluded = True
-                            break;
-                    #end for
-
-                    if id in pagesToUpdate:
-                        if tagToAssign["id"] not in pagesToUpdate[id]:
-                            pagesToUpdate[docId].append(tagToAssign["id"])
-                    else:
-                        pagesToUpdate[docId] = [tagToAssign["id"]]
-            #end for
-        #end for
+        #assign tags to pages for later update
+        tags_to_assign_set = {(tag["name"].lower(), frozenset(tag["excludeWords"]), tag["id"], frozenset(tag["synonyms"])) for tag in tags_to_assign}
+        title_lower = title.lower()
+       
+        for tag_name, exclude_words, tag_id, synonyms in tags_to_assign_set:
+           if tag_name in title_lower and not any(exclude_word in title_lower for exclude_word in exclude_words):
+               pages_to_update.setdefault(docId, []).append(tag_id)
+           elif any(synonym in title_lower and not any(exclude_word in title_lower for exclude_word in exclude_words) for synonym in synonyms):
+               pages_to_update.setdefault(docId, []).append(tag_id)
 
         docs += 1
-        if docs == maxDocsToProcess:
+        if docs == max_docs_to_process:
             break
     #end for
         
-    pageUrl = rawJson["next"]
-    log.info(f"processed {docs} of {docsToProcess} documents")
+    page_url = raw_json["next"]
+    log.info(f"processed {docs} of {docs_to_process} documents")
 #end while
                
 log.info(f"Processing complete. Bulk update being prepared for {docs} documents")
+
 #build dictionary keyed by tag where each tag has the list of pages for the tag
-pagesByTags = {}
-for key in pagesToUpdate.keys():
-    for tagToAssign in pagesToUpdate[key]:
-        if tagToAssign is not None:
-            if tagToAssign in pagesByTags:
-                pagesByTags[tagToAssign].append(key)
-            else:
-                pagesByTags[tagToAssign] = [ key ]
+pages_by_tags = {}
+for key, tags in pages_to_update.items():
+    for tag_to_assign in tags:
+        if tag_to_assign:
+            pages_by_tags.setdefault(tag_to_assign, []).append(key)
 #end for
 
 #Call bulk edit on each tag to update pages with tag
-for key in pagesByTags.keys():
-    log.info(f"Bulk updating pages for tag {key} with documents {pagesByTags[key]}")
+for key in pages_by_tags.keys():
+    log.info(f"Bulk updating pages for tag {key} with documents {pages_by_tags[key]}")
     
     body = {
-        "documents": pagesByTags[key],
+        "documents": pages_by_tags[key],
         "method": "modify_tags",
         "parameters": {
             "add_tags": [ key ],
             "remove_tags": []
         }
     }
-    editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-    log.debug(editResponse)
+    edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+    log.debug(edit_response)
 
-    if editResponse.status_code != 200:
-        log.error(f"Failed to bulk edit for tag {key}.  Error is {editResponse.reason}")
+    if edit_response.status_code != 200:
+        log.error(f"Failed to bulk edit for tag {key}.  Error is {edit_response.reason}")
 #end for
         
 #call bulk edit for the correspondent
-if int(selectedCorrespondent) != 0:
-    log.info(f"Bulk updating {len(allDocuments)} documents for correspondent with id {selectedCorrespondent}. Documents: {allDocuments}")
+if int(selected_correspondent) != 0:
+    log.info(f"Bulk updating {len(all_documents)} documents for correspondent with id {selected_correspondent}. Documents: {all_documents}")
 
     body = {
-        "documents": allDocuments,
+        "documents": all_documents,
         "method": "set_correspondent",
         "parameters": {
-            "correspondent": int(selectedCorrespondent)
+            "correspondent": int(selected_correspondent)
         }
     }
-    editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-    log.debug(editResponse)
+    edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+    log.debug(edit_response)
 
-    if editResponse.status_code != 200:
-        log.error(f"Failed to bulk edit for correspondent with id {selectedCorrespondent}.  Error is {editResponse.reason}")
+    if edit_response.status_code != 200:
+        log.error(f"Failed to bulk edit for correspondent with id {selected_correspondent}.  Error is {edit_response.reason}")
 #end if
 
 #call bulk edit for the map document type
-log.info(f"Bulk updating {len(mapDocuments)} documents for map document type with id {mapDocumentTypeId}. Documents: {mapDocuments}")
+log.info(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
 
 body = {
-    "documents": mapDocuments,
+    "documents": map_documents,
     "method": "set_document_type",
     "parameters": {
-        "document_type": mapDocumentTypeId
+        "document_type": map_document_type_id
     }
 }
-editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-log.debug(editResponse)
+edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+log.debug(edit_response)
 
-if editResponse.status_code != 200:
-    log.error(f"Failed to bulk edit for map document type with id {mapDocumentTypeId}.  Error is {editResponse.reason}")
+if edit_response.status_code != 200:
+    log.error(f"Failed to bulk edit for map document type with id {map_document_type_id}.  Error is {edit_response.reason}")
 
 #call bulk edit for the pdf document type
-log.info(f"Bulk updating {len(pdfDocuments)} documents for uncategorized document type with id {pdfDocumentTypeId}. Documents: {pdfDocuments}")
+log.info(f"Bulk updating {len(pdf_documents)} documents for uncategorized document type with id {pdf_document_type_id}. Documents: {pdf_documents}")
 
 body = {
-    "documents": pdfDocuments,
+    "documents": pdf_documents,
     "method": "set_document_type",
     "parameters": {
-        "document_type": pdfDocumentTypeId
+        "document_type": pdf_document_type_id
     }
 }
-editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
-log.debug(editResponse)
+edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+log.debug(edit_response)
 
-if editResponse.status_code != 200:
-    log.error(f"Failed to bulk edit for uncategorized document type with id {pdfDocumentTypeId}.  Error is {editResponse.reason}")
+if edit_response.status_code != 200:
+    log.error(f"Failed to bulk edit for uncategorized document type with id {pdf_document_type_id}.  Error is {edit_response.reason}")
