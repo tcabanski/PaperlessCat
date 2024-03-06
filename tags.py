@@ -33,7 +33,7 @@ tags_to_assign = [
     {"name":"Tower", "id":None, "docIds": [], "synonyms": ["Wizard"], "excludeWords": []},
     {"name":"Underground", "id":None, "docIds": [], "synonyms": ["Underdark", "Cave", "Sewer"], "excludeWords": []},
     {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
-    {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway"], "excludeWords": []},
+    {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway", "Path"], "excludeWords": []},
     {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Potion", "Apothecary"], "excludeWords": []},
     {"name":"Swamp", "id":None, "docIds": [], "synonyms": ["Bog", "Marsh", "Fen"], "excludeWords": []},
     {"name":"Phased", "id":None, "docIds": [], "synonyms": ["phase"], "excludeWords": []}
