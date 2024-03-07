@@ -16,6 +16,7 @@ tags_to_assign = [
     {"name":"Forest", "id":None, "docIds": [], "synonyms": ["Glade", "Woods"], "excludeWords": []},
     {"name":"Graveyard/etc.", "id":None, "docIds": [], "synonyms": ["Grave", "Tomb", "Mausoleum", "Cemetery", "Crypt"], "excludeWords": []},
     {"name":"Grid", "id": None, "docIds": [], "synonyms": [], "excludeWords": ["No", "Non", "less"]},
+    {"name":"House", "id":None, "docIds": [], "synonyms": ["Home"], "excludeWords": []},
     {"name":"Island", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Jungle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Lab", "id":None, "docIds": [], "synonyms": ["Alchemist", "Alchemical", "Potion", "Apothecary"], "excludeWords": []},
