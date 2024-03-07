@@ -1,5 +1,8 @@
 import requests
+import logging
+
 def choose_correspondent(auth_credentials):
+    log = logging.getLogger("global")
     page_url = "http://localhost:8000/api/correspondents/?full_perms=true"
     print("\n\n")
     row = 0

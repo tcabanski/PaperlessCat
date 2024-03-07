@@ -1,4 +1,5 @@
 import requests
+import re
 from collections import namedtuple
 import logging
 import pathlib
@@ -64,15 +65,43 @@ while page_url is not None:
             pdf_documents.append(docId)
         #end if
 
-        #assign tags to pages for later update
-        tags_to_assign_set = {(tag["name"].lower(), frozenset(tag["excludeWords"]), tag["id"], frozenset(tag["synonyms"])) for tag in tags_to_assign}
-        title_lower = title.lower()
-       
-        for tag_name, exclude_words, tag_id, synonyms in tags_to_assign_set:
-           if tag_name in title_lower and not any(exclude_word in title_lower for exclude_word in exclude_words):
-               pages_to_update.setdefault(docId, []).append(tag_id)
-           elif any(synonym in title_lower and not any(exclude_word in title_lower for exclude_word in exclude_words) for synonym in synonyms):
-               pages_to_update.setdefault(docId, []).append(tag_id)
+        for tag_to_assign in tags_to_assign:
+            #Tag if the title includes the name of the tag and one of the exclude words is not present
+            if title.lower().find(tag_to_assign["name"].lower()) > -1:
+                excluded = False
+                for excludeWord in tag_to_assign["excludeWords"]:
+                    if title.lower().find(excludeWord.lower()) > -1:
+                        excluded = True
+                        break;
+                #end for
+                
+                if not excluded:
+                    if docId in pages_to_update:
+                        if tag_to_assign["id"] not in pages_to_update[docId]:
+                            pages_to_update[docId].append(tag_to_assign["id"])
+                    else:
+                        pages_to_update[docId] = [tag_to_assign["id"]]
+                    #end if
+                #end if
+            #end if
+
+            #Tag if the title includes one of the synomnyms and not one of the exluded words
+            for synonym in tag_to_assign["synonyms"]:
+                if title.lower().find(synonym.lower()) > -1:
+                    excluded = False
+                    for excludeWord in tag_to_assign["excludeWords"]:
+                        if title.lower().find(excludeWord.lower()) > -1:
+                            excluded = True
+                            break;
+                    #end for
+
+                    if docId in pages_to_update:
+                        if tag_to_assign["id"] not in pages_to_update[docId]:
+                            pages_to_update[docId].append(tag_to_assign["id"])
+                    else:
+                        pages_to_update[docId] = [tag_to_assign["id"]]
+            #end for
+        #end for
 
         docs += 1
         if docs == max_docs_to_process:
