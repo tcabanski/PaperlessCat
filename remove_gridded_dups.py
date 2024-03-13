@@ -4,6 +4,7 @@ from collections import namedtuple
 import logging
 import pathlib
 from document import Document
+import difflib
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -13,6 +14,15 @@ log.addHandler(console)
 log.setLevel(logging.INFO)
 log.info("Starting")
 
+equivalent_diffs = [
+    "+no",
+    "+non",
+    "+un",
+    "-grid",
+    "-gridded"
+]
+
+
 #config
 map_document_type_id = 1
 grid_tag_id = 34
@@ -21,18 +31,20 @@ AUTH_CREDENTIALS = ("tom", "paperless")
 # Scan through all the documents and find gridded duplicates
 docs = 0
 page_url = "http://localhost:8000/api/documents/?document_type=1"
+#page_url = "http://localhost:8000/api/documents/?page=1&page_size=50&ordering=-added&truncate_content=true&title__icontains=120%20ppi%20-%2054%20x%2030%20-%20mausoleum%20inside"
 
 
-map_documents = []
+without_grid = []
 with_grid = []
+candidates_to_delete = []
 response = requests.get(page_url, auth = AUTH_CREDENTIALS)
 raw_json = response.json()
 log.debug(raw_json)
 
 doc_count = len(raw_json["all"])
-log.info(f"Processing {doc_count} documents")
+log.info(f"Reading {doc_count} maps")
 
-page_url = "http://localhost:8000/api/documents/?document_type=1&page_size=10000"
+page_url += "&page_size=10000"
 while page_url is not None:
     response = requests.get(page_url, auth = AUTH_CREDENTIALS)
     raw_json = response.json()
@@ -40,16 +52,64 @@ while page_url is not None:
 
     for doc_result in raw_json["results"]:
         doc = Document(doc_result["id"], doc_result["title"].lower(), doc_result["original_file_name"].lower(), 
-                       grid_tag_id in doc_result["tags"])
-        map_documents.append(doc)
+                       grid_tag_id in doc_result["tags"], 0)
         if (doc.has_grid_tag):
             with_grid.append(doc)
+        else:
+            without_grid.append(doc)
         #end if
         
         docs += 1
     #end for
         
     page_url = raw_json["next"]
-    log.info(f"processed {docs} of {doc_count} documents")
+    log.info(f"Read {docs} of {doc_count} maps")
 #end while
-log.info(f"processed {docs} of {doc_count} documents and found {len(with_grid)} with grid")
+log.info(f"Read {docs} of {doc_count} maps and found {len(with_grid)} with grid")
+
+log.info(f"Looking for gridded duplicates that can be deleted among {len(with_grid)} gridded candidates")
+
+docs = 0
+doc_count = len(with_grid)
+for grid_doc in with_grid:
+    for no_grid_doc in without_grid:
+        delta_list = [diff for diff in difflib.ndiff(grid_doc.title, no_grid_doc.title) if diff[0] != ' ']
+        if len(delta_list) > 0:
+            consolidated_delta_list = []
+            mode = delta_list[0][0]
+            spec = ""
+            for item in delta_list:
+                if item[0] == mode:
+                    spec += item[2:]
+                else:
+                    consolidated_delta_list.append(mode + spec)
+                    spec = item[2:]
+                    mode = item[0]
+                #end if
+            #end for
+            if len(spec) > 0:
+                consolidated_delta_list.append(mode + spec)
+            #end if
+            if (len(consolidated_delta_list) == 1):
+                for diff in equivalent_diffs:
+                    if diff in consolidated_delta_list:
+                        grid_doc.non_grid_duplicate_id = no_grid_doc.id
+                        candidates_to_delete.append(grid_doc)
+                        break;
+                    #end if
+                #end for
+            #end if
+        #end if
+    #end for
+    docs += 1   
+    if docs % 1 == 0:
+        log.info(f"Processed {docs} of {doc_count} maps with grids") 
+        break 
+#end for
+            
+log.info(f"Processed {docs} of {doc_count} maps with grids")             
+log.info(f"Found {len(candidates_to_delete)} maps with grids to delete")
+                
+                              
+
+    
