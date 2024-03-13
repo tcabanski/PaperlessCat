@@ -21,6 +21,7 @@ equivalent_diffs = [
     "-grid",
     "-gridded"
 ]
+longest_diff = len(max(equivalent_diffs, key=len)) + 5  
 
 
 #config
@@ -69,42 +70,56 @@ log.info(f"Read {docs} of {doc_count} maps and found {len(with_grid)} with grid"
 
 log.info(f"Looking for gridded duplicates that can be deleted among {len(with_grid)} gridded candidates")
 
+# todo: I believe this is too narrow and will not be able to handle cases where no gets added with things like dashes.  It could be as simple as adding the right specs to the delta list but I am not sure about that.
 docs = 0
 doc_count = len(with_grid)
 for grid_doc in with_grid:
+    grid_doc_extension = pathlib.Path(grid_doc.file_name).suffix.lower()
+    grid_doc_length = len(grid_doc.file_name)
+    no_grid_count = 0
+    log.info(f"Processing gridded map {docs + 1} of {len(with_grid)} for non-gridded duplicates.  Scanning {len(without_grid)} maps without grids.")
     for no_grid_doc in without_grid:
-        delta_list = [diff for diff in difflib.ndiff(grid_doc.title, no_grid_doc.title) if diff[0] != ' ']
-        if len(delta_list) > 0:
-            consolidated_delta_list = []
-            mode = delta_list[0][0]
-            spec = ""
-            for item in delta_list:
-                if item[0] == mode:
-                    spec += item[2:]
-                else:
-                    consolidated_delta_list.append(mode + spec)
-                    spec = item[2:]
-                    mode = item[0]
-                #end if
-            #end for
-            if len(spec) > 0:
-                consolidated_delta_list.append(mode + spec)
-            #end if
-            if (len(consolidated_delta_list) == 1):
-                for diff in equivalent_diffs:
-                    if diff in consolidated_delta_list:
-                        grid_doc.non_grid_duplicate_id = no_grid_doc.id
-                        candidates_to_delete.append(grid_doc)
-                        break;
+        fn_len = len(no_grid_doc.file_name)
+        if not (fn_len > grid_doc_length + longest_diff or fn_len < grid_doc_length - longest_diff or pathlib.Path(no_grid_doc.file_name).suffix.lower() != grid_doc_extension):
+            delta_list = [diff for diff in difflib.ndiff(grid_doc.title, no_grid_doc.title) if diff[0] != ' ']
+            if len(delta_list) > 0:
+                consolidated_delta_list = []
+                mode = delta_list[0][0]
+                spec = ""
+                for item in delta_list:
+                    if item[0] == mode:
+                        spec += item[2:]
+                    else:
+                        consolidated_delta_list.append(mode + spec)
+                        spec = item[2:]
+                        mode = item[0]
                     #end if
                 #end for
+                if len(spec) > 0:
+                    consolidated_delta_list.append(mode + spec)
+                #end if
+                if (len(consolidated_delta_list) == 1):
+                    for diff in equivalent_diffs:
+                        if diff in consolidated_delta_list:
+                            grid_doc.non_grid_duplicate_id = no_grid_doc.id
+                            candidates_to_delete.append(grid_doc)
+                            break;
+                        #end if
+                    #end for
+                #end if
             #end if
         #end if
+    
+        no_grid_count += 1  
+        if no_grid_count % 10000 == 0:
+            log.info(f"Scanned {no_grid_count} of {len(without_grid)} without grid for gridded map {docs + 1} of {len(with_grid)}")
+        #end if
     #end for
-    docs += 1   
-    if docs % 1 == 0:
-        log.info(f"Processed {docs} of {doc_count} maps with grids") 
-        break 
+    docs += 1  
+    if docs % 2 == 0:
+        log.info(f"Processed {docs} of {len(with_grid)} gridded maps")
+        break
+    #end if 
 #end for
             
 log.info(f"Processed {docs} of {doc_count} maps with grids")             
