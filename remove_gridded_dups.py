@@ -5,6 +5,7 @@ import logging
 import pathlib
 from document import Document
 import difflib
+import json
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -53,7 +54,7 @@ while page_url is not None:
 
     for doc_result in raw_json["results"]:
         doc = Document(doc_result["id"], doc_result["title"].lower(), doc_result["original_file_name"].lower(), 
-                       grid_tag_id in doc_result["tags"], 0)
+                       grid_tag_id in doc_result["tags"])
         if (doc.has_grid_tag):
             with_grid.append(doc)
         else:
@@ -74,13 +75,13 @@ log.info(f"Looking for gridded duplicates that can be deleted among {len(with_gr
 docs = 0
 doc_count = len(with_grid)
 for grid_doc in with_grid:
-    grid_doc_extension = pathlib.Path(grid_doc.file_name).suffix.lower()
-    grid_doc_length = len(grid_doc.file_name)
+    grid_doc_extension = grid_doc.file_name_extension
+    grid_doc_length = grid_doc.file_name_length
     no_grid_count = 0
     log.info(f"Processing gridded map {docs + 1} of {len(with_grid)} for non-gridded duplicates.  Scanning {len(without_grid)} maps without grids.")
     for no_grid_doc in without_grid:
         fn_len = len(no_grid_doc.file_name)
-        if not (fn_len > grid_doc_length + longest_diff or fn_len < grid_doc_length - longest_diff or pathlib.Path(no_grid_doc.file_name).suffix.lower() != grid_doc_extension):
+        if fn_len <= grid_doc_length + longest_diff and fn_len >= grid_doc_length - longest_diff and pathlib.Path(no_grid_doc.file_name).suffix.lower() == grid_doc_extension:
             delta_list = [diff for diff in difflib.ndiff(grid_doc.title, no_grid_doc.title) if diff[0] != ' ']
             if len(delta_list) > 0:
                 consolidated_delta_list = []
@@ -116,14 +117,12 @@ for grid_doc in with_grid:
         #end if
     #end for
     docs += 1  
-    if docs % 2 == 0:
-        log.info(f"Processed {docs} of {len(with_grid)} gridded maps")
-        break
     #end if 
 #end for
             
 log.info(f"Processed {docs} of {doc_count} maps with grids")             
 log.info(f"Found {len(candidates_to_delete)} maps with grids to delete")
+json.dump(candidates_to_delete, open("candidates_to_delete.json", "w"), indent = 2)
                 
                               
 
