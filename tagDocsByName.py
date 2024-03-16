@@ -1,11 +1,11 @@
 import requests
-import re
 from collections import namedtuple
 import logging
 import pathlib
 from tags import tags_to_assign
 from tags import validate_tags
 from correspondent import choose_correspondent
+import json
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -159,34 +159,8 @@ if int(selected_correspondent) != 0:
         log.error(f"Failed to bulk edit for correspondent with id {selected_correspondent}.  Error is {edit_response.reason}")
 #end if
 
-#call bulk edit for the map document type
-log.info(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
+with open("MapDocuments.json", "w", encoding="utf-8") as f:
+    json.dump(map_documents, f, ensure_ascii=False, indent=4)
 
-body = {
-    "documents": map_documents,
-    "method": "set_document_type",
-    "parameters": {
-        "document_type": map_document_type_id
-    }
-}
-edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
-log.debug(edit_response)
-
-if edit_response.status_code != 200:
-    log.error(f"Failed to bulk edit for map document type with id {map_document_type_id}.  Error is {edit_response.reason}")
-
-#call bulk edit for the pdf document type
-log.info(f"Bulk updating {len(pdf_documents)} documents for uncategorized document type with id {pdf_document_type_id}. Documents: {pdf_documents}")
-
-body = {
-    "documents": pdf_documents,
-    "method": "set_document_type",
-    "parameters": {
-        "document_type": pdf_document_type_id
-    }
-}
-edit_response = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
-log.debug(edit_response)
-
-if edit_response.status_code != 200:
-    log.error(f"Failed to bulk edit for uncategorized document type with id {pdf_document_type_id}.  Error is {edit_response.reason}")
+with open("PdfDocuments.json", "w", encoding="utf-8") as f:
+    json.dump(pdf_documents, f, ensure_ascii=False, indent=4)
