@@ -1,7 +1,7 @@
 import requests
 from collections import namedtuple
 import logging
-import json
+import pathlib
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -15,13 +15,54 @@ log.info("Starting")
 AUTH_CREDENTIALS = ("tom", "paperless")
 map_document_type_id = 1
 pdf_document_type_id = 13
+only_process_empty_doc_type = True
 
-with open("MapDocuments.json") as map_documents_file:
-    map_documents = json.load(map_documents_file)
+# Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
+docs = 0
+if only_process_empty_doc_type:
+    page_url = "http://localhost:8000/api/documents/?document_type__isnull=1&page_size=100000"
+else:
+    page_url = "http://localhost:8000/api/documents/?sort=added&page-size=100000"
 
-with open("PdfDocuments.json") as pdf_documents_file:
-    pdf_documents = json.load(pdf_documents_file)
+map_documents = []
+pdf_documents = []
+all_documents = []
+pages_to_update = {}
+response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+raw_json = response.json()
+log.debug(raw_json)
 
+docs_to_process = len(raw_json["all"])
+log.info(f"Collecting {docs_to_process} documents to categorize")
+
+while page_url is not None:
+    response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+    raw_json = response.json()
+    log.debug(raw_json)
+
+    for doc_result in raw_json["results"]:
+        docId = doc_result["id"]
+        log.debug(f"processing docId {docId}")
+
+        title = doc_result["title"]
+        original_file_name = doc_result["original_file_name"]
+
+        all_documents.append(docId)
+
+        if pathlib.Path(original_file_name).suffix.lower() != ".pdf":
+            map_documents.append(docId)
+        #end if
+        
+        if pathlib.Path(original_file_name).suffix.lower() == ".pdf":
+            pdf_documents.append(docId)
+        #end if
+
+        docs += 1
+    #end for
+        
+    page_url = raw_json["next"]
+    log.info(f"processed {docs} of {docs_to_process} documents")
+#end while
 
 #call bulk edit for the map document type
 log.info(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
