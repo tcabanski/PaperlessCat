@@ -58,11 +58,11 @@ while page_url is not None:
 
         all_documents.append(docId)
 
-        if pathlib.Path(original_file_name).suffix.lower() != ".pdf":
+        if pathlib.Path(original_file_name).suffix.lower() not in [".pdf", ".txt"]:
             map_documents.append(docId)
         #end if
         
-        if pathlib.Path(original_file_name).suffix.lower() == ".pdf":
+        if pathlib.Path(original_file_name).suffix.lower() in [".pdf", ".txt"]:
             pdf_documents.append(docId)
         #end if
 
