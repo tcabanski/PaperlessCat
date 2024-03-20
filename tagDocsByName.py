@@ -20,6 +20,7 @@ map_document_type_id = 1
 pdf_document_type_id = 13
 max_docs_to_process = 999000
 only_process_empty_doc_type = True
+maxStopWordWhitespace = 3
 AUTH_CREDENTIALS = ("tom", "paperless")
 
 validate_tags(AUTH_CREDENTIALS)
@@ -67,10 +68,14 @@ while page_url is not None:
 
         for tag_to_assign in tags_to_assign:
             #Tag if the title includes the name of the tag and one of the exclude words is not present
-            if title.lower().find(tag_to_assign["name"].lower()) > -1:
+            tagWordIndex = title.lower().find(tag_to_assign["name"].lower())
+            if tagWordIndex > -1:
                 excluded = False
                 for excludeWord in tag_to_assign["excludeWords"]:
-                    if title.lower().find(excludeWord.lower()) > -1:
+                    excludedIndex = title.lower().find(excludeWord.lower())
+                    lenExcludedWord = len(excludeWord)
+                    if excludedIndex > -1 and (( excludedIndex < tagWordIndex and excludedIndex + lenExcludedWord + maxStopWordWhitespace >= tagWordIndex)
+                                               or (excludedIndex > tagWordIndex and excludedIndex - lenExcludedWord - maxStopWordWhitespace <= tagWordIndex)): 
                         excluded = True
                         break;
                 #end for
@@ -87,10 +92,14 @@ while page_url is not None:
 
             #Tag if the title includes one of the synomnyms and not one of the exluded words
             for synonym in tag_to_assign["synonyms"]:
-                if title.lower().find(synonym.lower()) > -1:
+                synonymWordIndex = title.lower().find(synonym.lower())
+                if synonymWordIndex > -1:
                     excluded = False
                     for excludeWord in tag_to_assign["excludeWords"]:
-                        if title.lower().find(excludeWord.lower()) > -1:
+                        excludedIndex = title.lower().find(excludeWord.lower())
+                        lenExcludedWord = len(excludeWord)
+                        if excludedIndex > -1 and (( excludedIndex < tagWordIndex and excludedIndex + lenExcludedWord + maxStopWordWhitespace >= synonymWordIndex)
+                                               or (excludedIndex > tagWordIndex and excludedIndex - lenExcludedWord - maxStopWordWhitespace <= synonymWordIndex)):
                             excluded = True
                             break;
                     #end for
