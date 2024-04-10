@@ -3,6 +3,7 @@ import sys
 import logging
 
 tags_to_assign = [
+    {"name":"Animated", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Astral", "id":None, "docIds": [], "synonyms": ["Asteroid", "Starship", "Star", "Planet", "Alien", "SciFi", "Space", "Orbital"], "excludeWords": []},
     {"name":"Blood", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Bridge", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
