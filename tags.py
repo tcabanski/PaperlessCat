@@ -72,6 +72,6 @@ def validate_tags(AUTH_CREDENTIALS):
         page_url = raw_json["next"]
 
     for tag_to_assign in tags_to_assign:
-        log.info(f"{tag_to_assign['name']}:{tag_to_assign['id']}")
+        log.debug(f"{tag_to_assign['name']}:{tag_to_assign['id']}")
 
     check_tags(tags_to_assign)
