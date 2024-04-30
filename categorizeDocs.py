@@ -9,7 +9,7 @@ formatter =  logging.Formatter('%(asctime)s %(levelname)s : %(message)s')
 console.setFormatter(formatter)
 log.addHandler(console)
 log.setLevel(logging.INFO)
-log.info("Starting")
+log.debug("Starting")
 
 #config
 AUTH_CREDENTIALS = ("tom", "paperless")
@@ -33,7 +33,7 @@ raw_json = response.json()
 log.debug(raw_json)
 
 docs_to_process = len(raw_json["all"])
-log.info(f"Collecting {docs_to_process} documents to categorize")
+log.debug(f"Collecting {docs_to_process} documents to categorize")
 
 while page_url is not None:
     response = requests.get(page_url, auth = AUTH_CREDENTIALS)
@@ -61,11 +61,11 @@ while page_url is not None:
     #end for
         
     page_url = raw_json["next"]
-    log.info(f"processed {docs} of {docs_to_process} documents")
+    log.debug(f"processed {docs} of {docs_to_process} documents")
 #end while
 
 #call bulk edit for the map document type
-log.info(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
+log.debug(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
 
 body = {
     "documents": map_documents,
@@ -81,7 +81,7 @@ if edit_response.status_code != 200:
     log.error(f"Failed to bulk edit for map document type with id {map_document_type_id}.  Error is {edit_response.reason}")
 
 #call bulk edit for the pdf document type
-log.info(f"Bulk updating {len(pdf_documents)} documents for uncategorized document type with id {pdf_document_type_id}. Documents: {pdf_documents}")
+log.debug(f"Bulk updating {len(pdf_documents)} documents for uncategorized document type with id {pdf_document_type_id}. Documents: {pdf_documents}")
 
 body = {
     "documents": pdf_documents,
@@ -95,3 +95,5 @@ log.debug(edit_response)
 
 if edit_response.status_code != 200:
     log.error(f"Failed to bulk edit for uncategorized document type with id {pdf_document_type_id}.  Error is {edit_response.reason}")
+
+log.info("Categorization done")

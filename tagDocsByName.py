@@ -13,7 +13,7 @@ formatter =  logging.Formatter('%(asctime)s %(levelname)s : %(message)s')
 console.setFormatter(formatter)
 log.addHandler(console)
 log.setLevel(logging.INFO)
-log.info("Starting")
+log.debug("Starting")
 
 #config
 map_document_type_id = 1
@@ -42,7 +42,7 @@ raw_json = response.json()
 log.debug(raw_json)
 
 docs_to_process = len(raw_json["all"])
-log.info(f"Processing {docs_to_process} documents")
+log.debug(f"Processing {docs_to_process} documents")
 
 while page_url is not None:
     response = requests.get(page_url, auth = AUTH_CREDENTIALS)
@@ -118,10 +118,10 @@ while page_url is not None:
     #end for
         
     page_url = raw_json["next"]
-    log.info(f"processed {docs} of {docs_to_process} documents")
+    log.debug(f"processed {docs} of {docs_to_process} documents")
 #end while
                
-log.info(f"Processing complete. Bulk update being prepared for {docs} documents")
+log.debug(f"Processing complete. Bulk update being prepared for {docs} documents")
 
 #build dictionary keyed by tag where each tag has the list of pages for the tag
 pages_by_tags = {}
@@ -133,7 +133,7 @@ for key, tags in pages_to_update.items():
 
 #Call bulk edit on each tag to update pages with tag
 for key in pages_by_tags.keys():
-    log.info(f"Bulk updating pages for tag {key} with documents {pages_by_tags[key]}")
+    log.debug(f"Bulk updating pages for tag {key} with documents {pages_by_tags[key]}")
     
     body = {
         "documents": pages_by_tags[key],
@@ -152,7 +152,7 @@ for key in pages_by_tags.keys():
         
 #call bulk edit for the correspondent
 if int(selected_correspondent) != 0:
-    log.info(f"Bulk updating {len(all_documents)} documents for correspondent with id {selected_correspondent}. Documents: {all_documents}")
+    log.debug(f"Bulk updating {len(all_documents)} documents for correspondent with id {selected_correspondent}. Documents: {all_documents}")
 
     body = {
         "documents": all_documents,
@@ -173,3 +173,5 @@ with open("MapDocuments.json", "w", encoding="utf-8") as f:
 
 with open("PdfDocuments.json", "w", encoding="utf-8") as f:
     json.dump(pdf_documents, f, ensure_ascii=False, indent=4)
+
+log.info("tagging docs by name Done")

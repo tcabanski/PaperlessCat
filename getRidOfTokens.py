@@ -11,7 +11,7 @@ formatter =  logging.Formatter('%(asctime)s %(levelname)s : %(message)s')
 console.setFormatter(formatter)
 log.addHandler(console)
 log.setLevel(logging.INFO)
-log.info("Starting")
+log.debug("Starting")
 
 #config
 mapDocumentTypeId = 1
@@ -31,7 +31,7 @@ log.debug(rawJson)
 
 docsToProcess = len(rawJson["all"])
 
-log.info(f"Processing {docsToProcess} documents")
+log.debug(f"Processing {docsToProcess} documents")
 for docId in rawJson["all"]:
     log.debug(f"process docId {docId}")
     if docs > 2500:
@@ -50,7 +50,7 @@ body = {
         }
     }
 
-log.info(f"Bulk deleting {len(docsToDelete)} documents. Documents: {docsToDelete}")
+log.debug(f"Bulk deleting {len(docsToDelete)} documents. Documents: {docsToDelete}")
                
 editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
 log.debug(editResponse)
