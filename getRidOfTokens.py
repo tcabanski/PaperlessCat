@@ -21,7 +21,7 @@ onlyProcessEmptyDocType = True
 
 # Scan through tokens and art and delete everything past the first 2500 docs
 docs = 0
-pageUrl = "http://localhost:8000/api/documents/?document_type__id__in=14&sort=created&reverse=1"
+pageUrl = "http://jittikun:8000/api/documents/?document_type__id__in=14&sort=created&reverse=1"
 
 docsToDelete = []
 
@@ -52,7 +52,7 @@ body = {
 
 log.debug(f"Bulk deleting {len(docsToDelete)} documents. Documents: {docsToDelete}")
                
-editResponse = requests.post("http://localhost:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+editResponse = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
 log.debug(editResponse)
 
 if editResponse.status_code != 200:

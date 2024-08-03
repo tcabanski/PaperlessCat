@@ -3,7 +3,7 @@ import logging
 
 def choose_correspondent(auth_credentials):
     log = logging.getLogger("global")
-    page_url = "http://localhost:8000/api/correspondents/?full_perms=true"
+    page_url = "http://jittikun:8000/api/correspondents/?full_perms=true"
     print("\n\n")
     item = 0
     while page_url is not None:

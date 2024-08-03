@@ -60,7 +60,7 @@ def tag_id_of_name(name, tags, oldId):
 
 def validate_tags(AUTH_CREDENTIALS):
     log = logging.getLogger("global")
-    page_url = "http://localhost:8000/api/tags/"
+    page_url = "http://jittikun:8000/api/tags/"
     while page_url is not None:
         response = requests.get(page_url, auth=AUTH_CREDENTIALS)
         raw_json = response.json()
