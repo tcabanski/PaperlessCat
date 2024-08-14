@@ -1,7 +1,9 @@
 import requests
 import logging
+import os
 
 def choose_correspondent(auth_credentials):
+    os.system("mode 200,100")
     log = logging.getLogger("global")
     page_url = "http://jittikun:8000/api/correspondents/?full_perms=true"
     print("\n\n")
@@ -12,7 +14,7 @@ def choose_correspondent(auth_credentials):
         log.debug(raw_json)
 
         for correspondent in raw_json["results"]:
-            data = f"{correspondent['id']:02d}: {correspondent['name']}".ljust(24)[0:24]
+            data = f"{correspondent['id']:02d}: {correspondent['name']}".ljust(30)[0:30]
             if item > 0 and item % 4 == 0:
                 print()
             print(f"{data}\t", end="")
