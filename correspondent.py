@@ -14,7 +14,7 @@ def choose_correspondent(auth_credentials):
         log.debug(raw_json)
 
         for correspondent in raw_json["results"]:
-            data = f"{correspondent['id']:02d}: {correspondent['name']}".ljust(30)[0:30]
+            data = f"{correspondent['id']:03d}: {correspondent['name']}".ljust(30)[0:30]
             if item > 0 and item % 4 == 0:
                 print()
             print(f"{data}\t", end="")
