@@ -2,6 +2,7 @@ import requests
 from collections import namedtuple
 import logging
 import pathlib
+from documentType import bulk_edit_document_type
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -15,6 +16,9 @@ log.debug("Starting")
 AUTH_CREDENTIALS = ("tom", "paperless")
 map_document_type_id = 1
 pdf_document_type_id = 13
+foundry_map_document_type_id = 17
+foundry_module_document_type_id = 15
+
 only_process_empty_doc_type = True
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
@@ -26,6 +30,8 @@ else:
 
 map_documents = []
 pdf_documents = []
+foundry_modules = []
+foundry_maps = [] 
 all_documents = []
 pages_to_update = {}
 response = requests.get(page_url, auth = AUTH_CREDENTIALS)
@@ -54,7 +60,12 @@ while page_url is not None:
         #end if
         
         if pathlib.Path(original_file_name).suffix.lower() == ".pdf":
-            pdf_documents.append(docId)
+            if original_file_name.startswith("AnimatedMap_"):
+                foundry_maps.append(docId)
+            elif original_file_name.startswith("Module_"):
+                foundry_modules.append(docId)
+            else:
+                pdf_documents.append(docId)
         #end if
 
         docs += 1
@@ -64,36 +75,10 @@ while page_url is not None:
     log.debug(f"processed {docs} of {docs_to_process} documents")
 #end while
 
-#call bulk edit for the map document type
-log.debug(f"Bulk updating {len(map_documents)} documents for map document type with id {map_document_type_id}. Documents: {map_documents}")
-
-body = {
-    "documents": map_documents,
-    "method": "set_document_type",
-    "parameters": {
-        "document_type": map_document_type_id
-    }
-}
-edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
-log.debug(edit_response)
-
-if edit_response.status_code != 200:
-    log.error(f"Failed to bulk edit for map document type with id {map_document_type_id}.  Error is {edit_response.reason}")
-
-#call bulk edit for the pdf document type
-log.debug(f"Bulk updating {len(pdf_documents)} documents for uncategorized document type with id {pdf_document_type_id}. Documents: {pdf_documents}")
-
-body = {
-    "documents": pdf_documents,
-    "method": "set_document_type",
-    "parameters": {
-        "document_type": pdf_document_type_id
-    }
-}
-edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
-log.debug(edit_response)
-
-if edit_response.status_code != 200:
-    log.error(f"Failed to bulk edit for uncategorized document type with id {pdf_document_type_id}.  Error is {edit_response.reason}")
+#call bulk edit for the various document types
+bulk_edit_document_type(map_documents, map_document_type_id, AUTH_CREDENTIALS)
+bulk_edit_document_type(foundry_modules, foundry_module_document_type_id, AUTH_CREDENTIALS)
+bulk_edit_document_type(foundry_maps, foundry_map_document_type_id, AUTH_CREDENTIALS)
+bulk_edit_document_type(pdf_documents, pdf_document_type_id, AUTH_CREDENTIALS)
 
 log.info("Categorization done")
