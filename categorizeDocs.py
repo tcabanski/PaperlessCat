@@ -60,7 +60,7 @@ while page_url is not None:
         #end if
         
         if pathlib.Path(original_file_name).suffix.lower() == ".pdf":
-            if original_file_name.startswith("AnimatedMap_"):
+            if original_file_name.startswith("AnimatedMap_") or original_file_name.startswith("AdventureVTTFile_"):
                 foundry_maps.append(docId)
             elif original_file_name.startswith("Module_"):
                 foundry_modules.append(docId)
