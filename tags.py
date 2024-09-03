@@ -31,7 +31,7 @@ tags_to_assign = [
     {"name":"River", "id":None, "docIds": [], "synonyms": ["Stream", "Creek", "Water", "Pier", "Dock"], "excludeWords": []},
     {"name":"Road", "id":None, "docIds": [], "synonyms": ["Highway", "Path"], "excludeWords": []},
     {"name":"Ruins", "id":None, "docIds": [], "synonyms": ["Broken", "Abandoned", "Ruin"], "excludeWords": []},
-    {"name":"SciFi", "id":None, "docIds": [], "synonyms": ["Waste"], "excludeWords": []},
+    {"name":"SciFi", "id":None, "docIds": [], "synonyms": ["Cyber"], "excludeWords": []},
     {"name":"Scrub", "id":None, "docIds": [], "synonyms": ["Waste"], "excludeWords": []},
     {"name":"Shop", "id":None, "docIds": [], "synonyms": ["Apothecary", "Blacksmith", "Market"], "excludeWords": []},
     {"name":"Sky", "id":None, "docIds": [], "synonyms": ["Air"], "excludeWords": []},
