@@ -25,3 +25,15 @@ def choose_correspondent(auth_credentials):
     print("")
     selected_correspondent = input("Which correspondent should be assigned (0 for none)?")
     return selected_correspondent
+
+def get_correspondant_name(id, auth_credentials):
+    log = logging.getLogger("global")
+    response = requests.get(f"http://jittikun:8000/api/correspondents/?id={id}", auth = auth_credentials)
+    raw_json = response.json()
+    log.debug(raw_json)
+
+    if response.status_code != 200:
+        log.error(f"Failed to get correspondant for id {id}.  Error is {response.reason}")
+
+    correspondant = raw_json["results"][0]
+    return correspondant["name"]

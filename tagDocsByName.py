@@ -5,6 +5,7 @@ import pathlib
 from tags import tags_to_assign
 from tags import validate_tags
 from correspondent import choose_correspondent
+from correspondent import get_correspondant_name
 import json
 
 log = logging.getLogger("global")
@@ -25,6 +26,8 @@ AUTH_CREDENTIALS = ("tom", "paperless")
 
 validate_tags(AUTH_CREDENTIALS)
 selected_correspondent = choose_correspondent(AUTH_CREDENTIALS)
+name = get_correspondant_name(selected_correspondent, AUTH_CREDENTIALS)
+correspondant_scifi = ("(scifi)" in name.lower())
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
@@ -69,7 +72,7 @@ while page_url is not None:
         for tag_to_assign in tags_to_assign:
             #Tag if the title includes the name of the tag and one of the exclude words is not present
             tagWordIndex = title.lower().find(tag_to_assign["name"].lower())
-            if tagWordIndex > -1:
+            if tagWordIndex > -1 or (tag_to_assign["name"].lower() == "scifi" and correspondant_scifi):
                 excluded = False
                 for excludeWord in tag_to_assign["excludeWords"]:
                     excludedIndex = title.lower().find(excludeWord.lower())
@@ -80,7 +83,7 @@ while page_url is not None:
                         break;
                 #end for
                 
-                if not excluded:
+                if not excluded or (tag_to_assign["name"].lower() == "scifi" and correspondant_scifi):
                     if docId in pages_to_update:
                         if tag_to_assign["id"] not in pages_to_update[docId]:
                             pages_to_update[docId].append(tag_to_assign["id"])
