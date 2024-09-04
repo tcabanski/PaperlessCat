@@ -25,6 +25,7 @@ tags_to_assign = [
     {"name":"Lava", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Mountain", "id":None, "docIds": [], "synonyms": ["Cliff", "Bluff"], "excludeWords": []},
     {"name":"Night", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
+    {"name":"PF2E", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Phased", "id":None, "docIds": [], "synonyms": ["Phase"], "excludeWords": []},
     {"name":"Puzzle", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
     {"name":"Rain", "id":None, "docIds": [], "synonyms": ["Storm"], "excludeWords": []},
