@@ -163,3 +163,5 @@ MapDocuments.json
 candidatesForDeletion.json
 documentsWithGrid.json
 documentsWithoutGrid.json
+
+.secrets/

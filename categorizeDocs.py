@@ -3,6 +3,7 @@ from collections import namedtuple
 import logging
 import pathlib
 from documentType import bulk_edit_document_type
+from credentials import get_credentials
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -13,7 +14,8 @@ log.setLevel(logging.INFO)
 log.debug("Starting")
 
 #config
-AUTH_CREDENTIALS = ("tom", "paperless")
+auth_credentials = get_credentials()
+
 map_document_type_id = 1
 pdf_document_type_id = 13
 foundry_map_document_type_id = 17
@@ -34,7 +36,7 @@ foundry_modules = []
 foundry_maps = [] 
 all_documents = []
 pages_to_update = {}
-response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+response = requests.get(page_url, auth = auth_credentials)
 raw_json = response.json()
 log.debug(raw_json)
 
@@ -42,7 +44,7 @@ docs_to_process = len(raw_json["all"])
 log.debug(f"Collecting {docs_to_process} documents to categorize")
 
 while page_url is not None:
-    response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+    response = requests.get(page_url, auth = auth_credentials)
     raw_json = response.json()
     log.debug(raw_json)
 
@@ -76,9 +78,9 @@ while page_url is not None:
 #end while
 
 #call bulk edit for the various document types
-bulk_edit_document_type(map_documents, map_document_type_id, AUTH_CREDENTIALS)
-bulk_edit_document_type(foundry_modules, foundry_module_document_type_id, AUTH_CREDENTIALS)
-bulk_edit_document_type(foundry_maps, foundry_map_document_type_id, AUTH_CREDENTIALS)
-bulk_edit_document_type(pdf_documents, pdf_document_type_id, AUTH_CREDENTIALS)
+bulk_edit_document_type(map_documents, map_document_type_id, auth_credentials)
+bulk_edit_document_type(foundry_modules, foundry_module_document_type_id, auth_credentials)
+bulk_edit_document_type(foundry_maps, foundry_map_document_type_id, auth_credentials)
+bulk_edit_document_type(pdf_documents, pdf_document_type_id, auth_credentials)
 
 log.info("Categorization done")

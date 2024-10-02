@@ -1,9 +1,7 @@
 import requests
 from collections import namedtuple
-import json
 import logging
-import pathlib
-import sys
+from credentials import get_credentials
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -14,6 +12,7 @@ log.setLevel(logging.INFO)
 log.debug("Starting")
 
 #config
+auth_credentials = get_credentials()
 mapDocumentTypeId = 1
 pdfDocumentTypeId = 13
 maxDocsToProcess = 999000
@@ -25,7 +24,7 @@ pageUrl = "http://jittikun:8000/api/documents/?document_type__id__in=14&sort=cre
 
 docsToDelete = []
 
-response = requests.get(pageUrl, auth = ("tom", "paperless"))
+response = requests.get(pageUrl, auth = auth_credentials)
 rawJson = response.json()
 log.debug(rawJson)
 
@@ -52,7 +51,7 @@ body = {
 
 log.debug(f"Bulk deleting {len(docsToDelete)} documents. Documents: {docsToDelete}")
                
-editResponse = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = ("tom", "paperless"), json = body)
+editResponse = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
 log.debug(editResponse)
 
 if editResponse.status_code != 200:

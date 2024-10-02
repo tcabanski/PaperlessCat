@@ -7,6 +7,7 @@ from tags import validate_tags
 from correspondent import choose_correspondent
 from correspondent import get_correspondant_name
 import json
+from credentials import get_credentials
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -22,11 +23,11 @@ pdf_document_type_id = 13
 max_docs_to_process = 999000
 only_process_empty_doc_type = True
 maxStopWordWhitespace = 3
-AUTH_CREDENTIALS = ("tom", "paperless")
+auth_credentials = get_credentials()
 
-validate_tags(AUTH_CREDENTIALS)
-selected_correspondent = choose_correspondent(AUTH_CREDENTIALS)
-name = get_correspondant_name(selected_correspondent, AUTH_CREDENTIALS)
+validate_tags(auth_credentials)
+selected_correspondent = choose_correspondent(auth_credentials)
+name = get_correspondant_name(selected_correspondent, auth_credentials)
 correspondant_scifi = ("(scifi)" in name.lower())
 
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
@@ -40,7 +41,7 @@ map_documents = []
 pdf_documents = []
 all_documents = []
 pages_to_update = {}
-response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+response = requests.get(page_url, auth = auth_credentials)
 raw_json = response.json()
 log.debug(raw_json)
 
@@ -48,7 +49,7 @@ docs_to_process = len(raw_json["all"])
 log.debug(f"Processing {docs_to_process} documents")
 
 while page_url is not None:
-    response = requests.get(page_url, auth = AUTH_CREDENTIALS)
+    response = requests.get(page_url, auth = auth_credentials)
     raw_json = response.json()
     log.debug(raw_json)
 
@@ -146,7 +147,7 @@ for key in pages_by_tags.keys():
             "remove_tags": []
         }
     }
-    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
     log.debug(edit_response)
 
     if edit_response.status_code != 200:
@@ -164,7 +165,7 @@ if int(selected_correspondent) != 0:
             "correspondent": int(selected_correspondent)
         }
     }
-    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = AUTH_CREDENTIALS, json = body)
+    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
     log.debug(edit_response)
 
     if edit_response.status_code != 200:

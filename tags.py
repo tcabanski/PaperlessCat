@@ -60,11 +60,11 @@ def tag_id_of_name(name, tags, oldId):
         
     return oldId
 
-def validate_tags(AUTH_CREDENTIALS):
+def validate_tags(auth_credentials):
     log = logging.getLogger("global")
     page_url = "http://jittikun:8000/api/tags/"
     while page_url is not None:
-        response = requests.get(page_url, auth=AUTH_CREDENTIALS)
+        response = requests.get(page_url, auth=auth_credentials)
         raw_json = response.json()
         log.debug(raw_json)
 

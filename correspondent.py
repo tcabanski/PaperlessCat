@@ -27,6 +27,12 @@ def choose_correspondent(auth_credentials):
     return selected_correspondent
 
 def get_correspondant_name(id, auth_credentials):
+    if not id.isnumeric():
+        raise Exception("Input must be numeric") 
+    
+    if int(id) == 0:
+        return "NONE"
+    
     log = logging.getLogger("global")
     response = requests.get(f"http://jittikun:8000/api/correspondents/?id={id}", auth = auth_credentials)
     raw_json = response.json()
