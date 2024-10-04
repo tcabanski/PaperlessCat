@@ -9,7 +9,7 @@ formatter =  logging.Formatter('%(asctime)s %(levelname)s : %(message)s')
 console.setFormatter(formatter)
 log.addHandler(console)
 log.setLevel(logging.INFO)
-log.debug("Starting")
+log.info("Starting")
 maxDocs = 0
 
 #config
