@@ -1,6 +1,7 @@
 import requests
 import sys
 import logging
+import constants
 
 tags_to_assign = [
     {"name":"Animated", "id":None, "docIds": [], "synonyms": [], "excludeWords": []},
@@ -62,7 +63,7 @@ def tag_id_of_name(name, tags, oldId):
 
 def validate_tags(auth_credentials):
     log = logging.getLogger("global")
-    page_url = "http://jittikun:8000/api/tags/"
+    page_url = f"http://{constants.API_HOST}:8000/api/tags/"
     while page_url is not None:
         response = requests.get(page_url, auth=auth_credentials)
         raw_json = response.json()

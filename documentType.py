@@ -1,5 +1,6 @@
 import requests
 import logging
+import constants
 
 def bulk_edit_document_type(documents, document_type_id, auth_credentials):
     log = logging.getLogger("global")
@@ -12,7 +13,7 @@ def bulk_edit_document_type(documents, document_type_id, auth_credentials):
             "document_type": document_type_id
         }
     }
-    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
+    edit_response = requests.post(f"http://{constants.API_HOST}:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
     log.debug(edit_response)
 
     if edit_response.status_code != 200:

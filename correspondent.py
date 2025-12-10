@@ -2,11 +2,12 @@ import requests
 import logging
 import os
 import platform
+import constants
 
 def choose_correspondent(auth_credentials):
     os.system("mode 200,100")
     log = logging.getLogger("global")
-    base_url = "http://jittikun:8000/api/correspondents/?full_perms=true"
+    base_url = f"http://{constants.API_HOST}:8000/api/correspondents/?full_perms=true"
     print("\n\n")
 
     def clear_console():
@@ -96,7 +97,7 @@ def get_correspondant_name(id, auth_credentials):
         return "NONE"
     
     log = logging.getLogger("global")
-    response = requests.get(f"http://jittikun:8000/api/correspondents/?id={id}", auth = auth_credentials)
+    response = requests.get(f"http://{constants.API_HOST}:8000/api/correspondents/?id={id}", auth = auth_credentials)
     raw_json = response.json()
     log.debug(raw_json)
 

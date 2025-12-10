@@ -8,6 +8,7 @@ from correspondent import choose_correspondent
 from correspondent import get_correspondant_name
 import json
 from credentials import get_credentials
+import constants
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -33,9 +34,9 @@ correspondant_scifi = ("(scifi)" in name.lower())
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 if only_process_empty_doc_type:
-    page_url = "http://jittikun:8000/api/documents/?document_type__isnull=1&page_size=100000"
+    page_url = f"http://{constants.API_HOST}:8000/api/documents/?document_type__isnull=1&page_size=100000"
 else:
-    page_url = "http://jittikun:8000/api/documents/?sort=added&page-size=100000"
+    page_url = f"http://{constants.API_HOST}:8000/api/documents/?sort=added&page-size=100000"
 
 map_documents = []
 pdf_documents = []
@@ -147,7 +148,7 @@ for key in pages_by_tags.keys():
             "remove_tags": []
         }
     }
-    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
+    edit_response = requests.post(f"http://{constants.API_HOST}:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
     log.debug(edit_response)
 
     if edit_response.status_code != 200:
@@ -165,7 +166,7 @@ if int(selected_correspondent) != 0:
             "correspondent": int(selected_correspondent)
         }
     }
-    edit_response = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
+    edit_response = requests.post(f"http://{constants.API_HOST}:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
     log.debug(edit_response)
 
     if edit_response.status_code != 200:

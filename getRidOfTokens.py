@@ -2,6 +2,7 @@ import requests
 from collections import namedtuple
 import logging
 from credentials import get_credentials
+import constants
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -20,7 +21,7 @@ onlyProcessEmptyDocType = True
 
 # Scan through tokens and art and delete everything past the first 2500 docs
 docs = 0
-pageUrl = "http://jittikun:8000/api/documents/?document_type__id__in=14&sort=created&reverse=1"
+pageUrl = f"http://{constants.API_HOST}:8000/api/documents/?document_type__id__in=14&sort=created&reverse=1"
 
 docsToDelete = []
 
@@ -51,7 +52,7 @@ body = {
 
 log.debug(f"Bulk deleting {len(docsToDelete)} documents. Documents: {docsToDelete}")
                
-editResponse = requests.post("http://jittikun:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
+editResponse = requests.post(f"http://{constants.API_HOST}:8000/api/documents/bulk_edit/", auth = auth_credentials, json = body)
 log.debug(editResponse)
 
 if editResponse.status_code != 200:

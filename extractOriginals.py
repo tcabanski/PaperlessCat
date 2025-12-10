@@ -2,6 +2,7 @@ import os
 import requests
 import logging
 from credentials import get_credentials
+import constants
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -16,7 +17,7 @@ maxDocs = 0
 auth_credentials = get_credentials()
 
 # Set your Paperless-ngx API base URL and API token
-API_URL = "http://jittikun:8000/api/documents/?sort=added&page-size=100"
+API_URL = f"http://{constants.API_HOST}:8000/api/documents/?sort=added&page-size=100"
 DOWNLOAD_DIR = "C:\\Users\\tom\\Downloads"
 
 # Function to download a document
@@ -42,7 +43,7 @@ def fetch_and_download_documents(url):
                 docCount += 1
                 document_id = document['id']
                 original_name = document['original_file_name']
-                download_url = f"http://jittikun:8000/api/documents/{document_id}/download/?original=true"
+                download_url = f"http://{constants.API_HOST}:8000/api/documents/{document_id}/download/?original=true"
                 
                 # Download the document with its original file name
                 download_document(document_id, original_name, download_url)

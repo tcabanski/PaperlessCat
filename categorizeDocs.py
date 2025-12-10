@@ -4,6 +4,7 @@ import logging
 import pathlib
 from documentType import bulk_edit_document_type
 from credentials import get_credentials
+import constants
 
 log = logging.getLogger("global")
 console = logging.StreamHandler()
@@ -26,9 +27,9 @@ only_process_empty_doc_type = True
 # Scan through all the documents and assign likely tags as well as assiging the map document type to things that are not PDF
 docs = 0
 if only_process_empty_doc_type:
-    page_url = "http://jittikun:8000/api/documents/?document_type__isnull=1&page_size=100000"
+    page_url = f"http://{constants.API_HOST}:8000/api/documents/?document_type__isnull=1&page_size=100000"
 else:
-    page_url = "http://jittikun:8000/api/documents/?sort=added&page-size=100000"
+    page_url = f"http://{constants.API_HOST}:8000/api/documents/?sort=added&page-size=100000"
 
 map_documents = []
 pdf_documents = []
