@@ -16,6 +16,7 @@ log.debug("Starting")
 
 #config
 auth_credentials = get_credentials()
+constants.validate()
 
 map_document_type_id = 1
 pdf_document_type_id = 13

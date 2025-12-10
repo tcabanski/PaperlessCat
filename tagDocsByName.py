@@ -25,6 +25,7 @@ max_docs_to_process = 999000
 only_process_empty_doc_type = True
 maxStopWordWhitespace = 3
 auth_credentials = get_credentials()
+constants.validate()
 
 validate_tags(auth_credentials)
 selected_correspondent = choose_correspondent(auth_credentials)

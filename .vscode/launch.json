@@ -9,7 +9,10 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "env": {
+                "PAPERLESS_HOST": "jittikun.oldmadmage.net"
+            }
         }
     ]
 }
